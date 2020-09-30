@@ -1,4 +1,8 @@
+import ast
 import csv
+import sys
+import math
+import os
 
 class attribute_set:
 	attribute_names = []
@@ -55,10 +59,12 @@ def main():
 		reader = csv.reader(f)
 		example_list = list(reader)
 
+
 	d1 = data_set(len(example_list),example_list)	
 	# print(d1.example_list,d1.sz)
 	new_node = node(1)
 	print(new_node.child)
+
 
 if __name__ == '__main__':
     main()
