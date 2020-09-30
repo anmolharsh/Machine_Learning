@@ -8,6 +8,12 @@ class attribute_set:
 	attribute_names = []
 	attribute_values = []
 	
+
+class node:
+	self.att_check = ""
+	self.edge_array = []
+	self.child_array = []
+
 # hi
 def main():
 	with open('attribute_info.txt',newline = '') as f : 	
@@ -24,7 +30,7 @@ def main():
 		print(attribute_set.attribute_names)
 		print(attribute_set.attribute_values)
 	with open('breast-cancer.csv',newline = '') as f :
-		reader = csv.reader(f);
+		reader = csv.reader(f);		#first divide into random 80/20 split
 
 
 
