@@ -1,4 +1,8 @@
+import ast
 import csv
+import sys
+import math
+import os
 
 class attribute_set:
 	attribute_names = []
@@ -22,7 +26,7 @@ def main():
 	with open('breast-cancer.csv',newline = '') as f :
 		reader = csv.reader(f);
 
-	
+
 
 if __name__ == '__main__':
     main()
