@@ -90,22 +90,19 @@ def calc_info_gain(attribute_number,example_list,target,attribute_set_all) :
 
 
 def all_pos(example_list,target):
+	positive = attribute_set.positive
+	negative = attribute_set.negative
+
 	for x in example_list:
-<<<<<<< HEAD
 		if x[target]==negative:
-=======
-		if x[0]==attribute_set.negative:
->>>>>>> a3b1aa7ea6e2015d3b34c7fcd15003bf3200db0d
 			return 0
 	return 1
 
 def all_neg(example_list,target):
+	positive = attribute_set.positive
+	negative = attribute_set.negative	
 	for x in example_list:
-<<<<<<< HEAD
 		if x[target]==positive:
-=======
-		if x[0]==attribute_set.positive:
->>>>>>> a3b1aa7ea6e2015d3b34c7fcd15003bf3200db0d
 			return 0
 	return 1
 
@@ -130,24 +127,16 @@ def base_check(max_depth,example_list,target,all_att,vis):
 
 
 def build_tree(max_depth,example_list,target, attribute_set_all,vis) :
-<<<<<<< HEAD
-	if base_check(max_depth,example_list,target,attribute_set_all,vis)==1 :
-=======
 	positive = attribute_set.positive
 	negative = attribute_set.negative
 
-	if base_check(max_depth,example_list,attribute_set_all,vis)==1 :
->>>>>>> a3b1aa7ea6e2015d3b34c7fcd15003bf3200db0d
+	if base_check(max_depth,example_list,target,attribute_set_all,vis)==1 :
 		#make leaf
 		leaf_node=node(target)
 		leaf_node.leaf=1
 		p_count=0
-<<<<<<< HEAD
-		n_count=0
-		print("leaf_node")
-=======
 		n_count=0	
->>>>>>> a3b1aa7ea6e2015d3b34c7fcd15003bf3200db0d
+		print("leaf_node")
 		# assign most common result in verdict
 		for x in example_list:
 			if x[target] == positive:
