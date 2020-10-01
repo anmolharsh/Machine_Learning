@@ -38,13 +38,15 @@ def entropy_pnv(sp,sn,sv):
 		return 0
 	if sp==sn:
 		return 1
-	sp=sp/sv
-	sn=sn/sv
+	sp=(sp*100)/sv
+	sn=(sn*100)/sv
+
 	res=(-1)*(sp*math.log(sp,2)+sn*math.log(sn,2))
+	# res=(-1)*(sn*(math.log(sn,2)) + sp*(math.log(sp,2)) - (2)*(math.log(sv,2)))
 	return res
 
 
-
+#calcs |s|*Entropy(s)
 def calc_entropy(example_list,target):
 	p_pos=0
 	p_neg=0
@@ -74,96 +76,110 @@ def calc_info_gain(attribute_number,example_list,target,attribute_set_all) :
 					sp+=1
 				elif x[target]==negative:
 					sn+=1
-		Esv+=entropy_pnv(sp,sn,sv)*((sv)/len(example_list))
-	return entropy-Esv
+		Esv+=(entropy_pnv(sp,sn,sv)*sv)
+		print(entropy," ",Esv," ",Esv/len(example_list))
+
+	return entropy-(Esv/1)
 
 
 
 
-def pos(example_list):
+def all_pos(example_list,target):
 	for x in example_list:
-		if x[0]==negative:
+		if x[target]==negative:
 			return 0
 	return 1
 
-def neg(example_list):
+def all_neg(example_list,target):
 	for x in example_list:
-		if x[0]==positive:
+		if x[target]==positive:
 			return 0
 	return 1
 
 
-def base_check(max_depth,example_list,all_att,vis):
+def base_check(max_depth,example_list,target,all_att,vis):
 	if max_depth==0:
 		return 1
 	else:
-		if pos(example_list):
+		if all_pos(example_list,target):
+			print("all_pos ",max_depth)
 			return 1
-		elif neg(example_list):
+		elif all_neg(example_list,target):
+			print("all_neg ",max_depth)
 			return 1
-		for x in vis:
-			if x==0:
-				return 0
-		return 1
+		else:
+			for x in vis:
+				if x==0:
+					return 0
+			print("no att ",max_depth)
+			return 1
 	return 0
 
 
 def build_tree(max_depth,example_list,target, attribute_set_all,vis) :
-	if base_check(max_depth,example_list,attribute_set_all,vis)==1 :
+	if base_check(max_depth,example_list,target,attribute_set_all,vis)==1 :
 		#make leaf
 		leaf_node=node(target)
 		leaf_node.leaf=1
 		p_count=0
 		n_count=0
+		print("leaf_node")
 		# assign most common result in verdict
 		for x in example_list:
-			if x[target]==positive:
-				p_count+=1
-			if x[target]==negative:
-				n_count+=1
-		if p_count>n_count:
-			leaf_node.target_val=positive
+			if x[target] == positive:
+				p_count += 1
+			if x[target] == negative:
+				n_count += 1
+		if p_count >= n_count:
+			leaf_node.target_val = positive
 		else:
-			leaf_node.target_val=negative
+			leaf_node.target_val = negative
 		return leaf_node 		# return node
 	else:
-		max_att=0
-		index=0
-		curr_max_gain=0
+		max_att = 0
+		index = 0
+		curr_max_gain = 0
 		for x in vis:
-			if x==0:
+			if x == 0:
 				# selecting best attribute
-				if curr_max_gain<calc_info_gain(index,example_list,target,attribute_set_all):
-					curr_max_gain=calc_info_gain(index,example_list,target,attribute_set_all)
+				temp_gain=calc_info_gain(index,example_list,target,attribute_set)
+				print(index," ",temp_gain, " ", max_depth)
+				if curr_max_gain<=temp_gain:
+					curr_max_gain=temp_gain
 					max_att=index
 			index+=1
 		# //we divide example_list over max_att
-		vis[max_att]=1
-		present_node= node(max_att)
-		for i in range(len(attribute_set_all.attribute_values[max_att])):
-			example_list_v=[]
+		# temp_vis[max_att]=1
+		temp_vis = []
+		for v in vis:
+			temp_vis.append(v)
+		temp_vis[max_att] = 1
+		present_node = node(max_att)
+		for i in range(len(attribute_set.attribute_values[max_att])):
+			example_list_v = []
 			for j in example_list:
-				if attribute_set_all.attribute_values[max_att][i]==j[max_att]:
+				if attribute_set_all.attribute_values[max_att][i] == j[max_att]:
 					example_list_v.append(j)
-			if len(example_list_v)==0:
+			if len(example_list_v) == 0:
 				# add leaf here
+				# print("branch leaf ",max_depth)
 				branch_node=node(target)
 				branch_node.leaf=1
 				p_count=0
 				n_count=0
 				# assign most common result in verdict
 				for x in example_list:
-					if x[target]==positive:
-						p_count+=1
-					if x[target]==negative:
-						n_count+=1
-				if p_count>n_count:
-					branch_node.target_val=positive
+					if x[target] == positive:
+						p_count += 1
+					if x[target] == negative:
+						n_count += 1
+				if p_count >= n_count:
+					branch_node.target_val = positive
 				else:
-					branch_node.target_val=negative
-				present_node.child[i]['pointer']=branch_node
+					branch_node.target_val = negative
+				present_node.child[i]['pointer'] = branch_node
 			else:
-				present_node.child[i]['pointer']= build_tree(max_depth-1,example_list_v,target,attribute_set_all,vis)
+				present_node.child[i]['pointer'] = build_tree(max_depth-1,example_list_v,target,attribute_set_all,temp_vis)
 
 		return present_node
 
@@ -172,22 +188,26 @@ def build_tree(max_depth,example_list,target, attribute_set_all,vis) :
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 def getVerdict(my_node,data_instance,target):
-	if my_node.leaf==1:
+	if my_node.leaf==1 or my_node==None:
 		return my_node.target_val
 	att_num=my_node.attribute_number
-	return getVerdict
-
-
-
-
-
-
-
-
-
-
-
+	for x in my_node.child:
+		if x['edge']==data_instance[att_num]:
+			# print(x['edge'])
+			return getVerdict(x['pointer'],data_instance,target)
+	
 
 
 def getAccuracy(tree_node,example_list,target):
@@ -197,6 +217,8 @@ def getAccuracy(tree_node,example_list,target):
 		if x[target]==getVerdict(tree_node,x,target):
 			res+=1
 		total+=1
+	print("res=",res)
+	print("total=",total)
 	return res/total
 
 
@@ -227,7 +249,7 @@ def main():
 
 	d1 = data_set(len(example_list),example_list)	
 	# print(d1.example_list,d1.sz)
-	new_node = node(1)
+	# new_node = node(1)
 	# print(new_node.child)
 	vis=[]
 	target_attribute=0
@@ -237,9 +259,22 @@ def main():
 	print("entropy(S) = ",calc_entropy(example_list,target_attribute))
 	print("gain for 1st att = ",calc_info_gain(1 ,example_list ,target_attribute , attribute_set ) )
 	print(vis)
-	new_node = build_tree(4, example_list, target_attribute, attribute_set, vis)
-	print(new_node.child)
-	# print(new_node.child[4]['pointer'].child)
+	# new_node = build_tree(140, example_list, target_attribute, attribute_set, vis)
+	# print("\nroot_node-->\n",new_node.child)
+	# print(new_node.child[1]['pointer'].child)
+	# getAccuracy(new_node,example_list[0:],target_attribute)
+	# print(vis)
+
+	# iter for height
+	newnode=[]
+	for x in range(11):
+		newnode.append(build_tree(x, example_list, target_attribute, attribute_set, vis))
+
+	print("\ndonez\n")
+	for x in range(11):
+		getAccuracy(newnode[x],example_list,target_attribute)
+
+	# print((-10)/2)
 
 if __name__ == '__main__':
     main()
