@@ -35,15 +35,15 @@ class node :
 
 
 def entropy_pnv(sp,sn,sv):
-	if(sp==sv or sn==sv):
+	if(sp==sv or sn==sv or sp==0 or sn==0):
 		return 0
 	if sp==sn:
-		return 1
-	sp=(sp*100)/sv
-	sn=(sn*100)/sv
+		return sv
+	# sp=(sp*1)/sv
+	# sn=(sn*1)/sv
 
-	res=(-1)*(sp*math.log(sp,2)+sn*math.log(sn,2))
-	# res=(-1)*(sn*(math.log(sn,2)) + sp*(math.log(sp,2)) - (2)*(math.log(sv,2)))
+	# res=(-1)*(sp*math.log(sp,2)+sn*math.log(sn,2))
+	res=(-1)*(sn*(math.log(sn,2)) + sp*(math.log(sp,2)) - (2)*(math.log(sv,2)))
 	return res
 
 
@@ -65,7 +65,7 @@ def calc_entropy(example_list,target):
 def calc_info_gain(attribute_number,example_list,target,attribute_set_all) :
 	positive = attribute_set.positive
 	negative = attribute_set.negative
-	entropy=calc_entropy(example_list,target)
+	entropy=calc_entropy(example_list,target) # |S|*Entropy(S)
 	# segregated_list=[]
 	Esv=0
 	# for x in attribute_set.attribute_values[attribute_number]:
@@ -82,8 +82,9 @@ def calc_info_gain(attribute_number,example_list,target,attribute_set_all) :
 				elif x[target]==negative:
 					sn+=1
 		Esv+=(entropy_pnv(sp,sn,sv)*sv)
-		print(entropy," ",Esv," ",Esv/len(example_list))
-
+		# print("vals: ",sp," ",sn," ",sv)
+	print(entropy," ",Esv, " ", entropy-Esv)
+		# we calculate |S|Entropy(S) - E{ |Sv|Entropy(Sv) } 
 	return entropy-(Esv/1)
 
 
@@ -112,16 +113,16 @@ def base_check(max_depth,example_list,target,all_att,vis):
 		return 1
 	else:
 		if all_pos(example_list,target):
-			print("all_pos ",max_depth)
+			# print("all_pos ",max_depth)
 			return 1
 		elif all_neg(example_list,target):
-			print("all_neg ",max_depth)
+			# print("all_neg ",max_depth)
 			return 1
 		else:
 			for x in vis:
 				if x==0:
 					return 0
-			print("no att ",max_depth)
+			# print("no att ",max_depth)
 			return 1
 	return 0
 
@@ -136,7 +137,7 @@ def build_tree(max_depth,example_list,target, attribute_set_all,vis) :
 		leaf_node.leaf=1
 		p_count=0
 		n_count=0	
-		print("leaf_node")
+		# print("leaf_node")
 		# assign most common result in verdict
 		for x in example_list:
 			if x[target] == positive:
