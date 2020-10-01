@@ -67,12 +67,7 @@ def calc_entropy(example_list,target):
 def calc_info_gain(attribute_number,example_list,target) :
 	positive = attribute_set.positive
 	negative = attribute_set.negative
-<<<<<<< HEAD
-	entropy=calc_entropy(example_list,target) # Entropy(S)
-=======
-
 	entropy=calc_entropy(example_list,target) # |S|*Entropy(S)
->>>>>>> 5d2f047e1244c57809691b13122260d3ab055b2e
 	# segregated_list=[]
 	Esv = 0
 	# for x in attribute_set.attribute_values[attribute_number]:
@@ -158,20 +153,11 @@ def solve_missing_values(example_list,attribute,target) :
 
 	return new_list
 
-<<<<<<< HEAD
-def build_tree( max_depth , example_list , target, attribute_set , vis ) :
-	positive = attribute_set.positive
-	negative = attribute_set.negative
-
-	if base_check(max_depth,example_list,target,attribute_set,vis)==1 :
-=======
-
 def build_tree(max_depth,example_list,target,vis) :
 	positive = attribute_set.positive
 	negative = attribute_set.negative
 
 	if base_check(max_depth,example_list,target,vis)==1 :
->>>>>>> 5d2f047e1244c57809691b13122260d3ab055b2e
 		#make leaf
 		leaf_node=node(target)
 		leaf_node.leaf=1
@@ -199,17 +185,10 @@ def build_tree(max_depth,example_list,target,vis) :
 		for x in vis:
 			if x == 0:
 				# selecting best attribute
-<<<<<<< HEAD
-				temp_gain=calc_info_gain(index,example_list,target,attribute_set)
-				# print(index," " , temp_gain, " " , curr_max_gain, " " , max_depth)
-				if curr_max_gain <= temp_gain:
-					curr_max_gain = temp_gain
-=======
 				temp_gain=calc_info_gain(index,example_list,target)
-				print(index," ",temp_gain, " ", max_depth)
+				# print(index," ",temp_gain, " ", max_depth)
 				if curr_max_gain<=temp_gain:
 					curr_max_gain=temp_gain
->>>>>>> 5d2f047e1244c57809691b13122260d3ab055b2e
 					max_att=index
 			index+=1
 		# //we divide example_list over max_att
@@ -241,11 +220,7 @@ def build_tree(max_depth,example_list,target,vis) :
 		present_node = node(max_att)
 		for i in range(len(attribute_set.attribute_values[max_att])) :
 			example_list_v = []
-<<<<<<< HEAD
-			for j in example_list:
-=======
 			for j in temp_example_list:
->>>>>>> 5d2f047e1244c57809691b13122260d3ab055b2e
 				if attribute_set.attribute_values[max_att][i] == j[max_att]:
 					example_list_v.append(j)
 			if len(example_list_v) == 0:
@@ -267,12 +242,7 @@ def build_tree(max_depth,example_list,target,vis) :
 					branch_node.target_val = negative
 				present_node.child[i]['pointer'] = branch_node
 			else:
-<<<<<<< HEAD
-				present_node.child[i]['pointer'] = build_tree(max_depth-1,example_list_v,target,attribute_set ,temp_vis)
-=======
 				present_node.child[i]['pointer'] = build_tree(max_depth-1,example_list_v,target,vis)
->>>>>>> 5d2f047e1244c57809691b13122260d3ab055b2e
-
 		return present_node
 
 
@@ -351,26 +321,22 @@ def main():
 	print("entropy(S) = ",calc_entropy(example_list,target_attribute))
 	print("gain for 1st att = ",calc_info_gain(1 ,example_list ,target_attribute) )
 	print(vis)
-	new_node = build_tree(140, example_list, target_attribute, attribute_set, vis)
-	print("\nroot_node-->\n",new_node.child)
-	print(new_node.child[0]['pointer'].child)
-	getAccuracy(new_node,example_list[0:],target_attribute)
-	print(vis)
+	# new_node = build_tree(140, example_list, target_attribute, attribute_set, vis)
+	# print("\nroot_node-->\n",new_node.child)
+	# print(new_node.child[0]['pointer'].child)
+	# getAccuracy(new_node,example_list[0:],target_attribute,vis)
+	# print(vis)
 
 	# iter for height
-<<<<<<< HEAD
 	# newnode=[]
 	# for x in range(11):
 	# 	newnode.append(build_tree(x, example_list, target_attribute, attribute_set, vis))
-=======
 	newnode=[]
 	for x in range(11):
 		newnode.append(build_tree(x, example_list, target_attribute,vis))
->>>>>>> 5d2f047e1244c57809691b13122260d3ab055b2e
-
-	# print("\ndonez\n")
-	# for x in range(11):
-	# 	getAccuracy(newnode[x],example_list,target_attribute)
+	print("\ndonez\n")
+	for x in range(11):
+		getAccuracy(newnode[x],example_list,target_attribute)
 
 	# print((-10)/2)
 
