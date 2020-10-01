@@ -5,13 +5,14 @@ import math
 import os
 
 
-positive="recurrence-events"
-negative="no-recurrence-events"
+
 
 
 class attribute_set:
 	attribute_names = []
 	attribute_values = []
+	positive = "recurrence-events"
+	negative = "no-recurrence-events"
 
 class data_set :
 	
@@ -51,6 +52,8 @@ def calc_entropy(example_list,target):
 	p_pos=0
 	p_neg=0
 	# res=0
+	positive = attribute_set.positive
+	negative = attribute_set.negative
 	for x in example_list:
 		if x[target]==positive:
 			p_pos+=1
@@ -60,6 +63,8 @@ def calc_entropy(example_list,target):
 
 
 def calc_info_gain(attribute_number,example_list,target,attribute_set_all) :
+	positive = attribute_set.positive
+	negative = attribute_set.negative
 	entropy=calc_entropy(example_list,target)
 	# segregated_list=[]
 	Esv=0
@@ -86,13 +91,21 @@ def calc_info_gain(attribute_number,example_list,target,attribute_set_all) :
 
 def all_pos(example_list,target):
 	for x in example_list:
+<<<<<<< HEAD
 		if x[target]==negative:
+=======
+		if x[0]==attribute_set.negative:
+>>>>>>> a3b1aa7ea6e2015d3b34c7fcd15003bf3200db0d
 			return 0
 	return 1
 
 def all_neg(example_list,target):
 	for x in example_list:
+<<<<<<< HEAD
 		if x[target]==positive:
+=======
+		if x[0]==attribute_set.positive:
+>>>>>>> a3b1aa7ea6e2015d3b34c7fcd15003bf3200db0d
 			return 0
 	return 1
 
@@ -117,13 +130,24 @@ def base_check(max_depth,example_list,target,all_att,vis):
 
 
 def build_tree(max_depth,example_list,target, attribute_set_all,vis) :
+<<<<<<< HEAD
 	if base_check(max_depth,example_list,target,attribute_set_all,vis)==1 :
+=======
+	positive = attribute_set.positive
+	negative = attribute_set.negative
+
+	if base_check(max_depth,example_list,attribute_set_all,vis)==1 :
+>>>>>>> a3b1aa7ea6e2015d3b34c7fcd15003bf3200db0d
 		#make leaf
 		leaf_node=node(target)
 		leaf_node.leaf=1
 		p_count=0
+<<<<<<< HEAD
 		n_count=0
 		print("leaf_node")
+=======
+		n_count=0	
+>>>>>>> a3b1aa7ea6e2015d3b34c7fcd15003bf3200db0d
 		# assign most common result in verdict
 		for x in example_list:
 			if x[target] == positive:
