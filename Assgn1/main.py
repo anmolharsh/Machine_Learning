@@ -1,8 +1,12 @@
 import csv
+import math
 
 class attribute_set:
 	attribute_names = []
 	attribute_values = []
+	target_attribute = None
+	pos = None
+	neg = None
 
 class data_set :
 	
@@ -24,9 +28,27 @@ class node :
 		self.target_val = ""
 
 
-# class tree :
+class tree :
 
-# def calc_info_gain(attribute_number,example_list) :
+	def __init__(self,root) :
+		self.root = root
+
+def calc_entropy(p,n) :
+	s = p+n
+	p = p/s
+	n = n/s
+	entropy = -p*math.log2(p) - n*math.log2(n)
+	return entropy
+
+def calc_info_gain(attribute_number,example_list) :
+	value_list  = attribute_set.attribute_values[attribute_number]
+	p = 0
+	n = 0
+	for x in example_list :
+		p += (x[0] == attribute_set.pos)
+		n += (x[0] == attribute_set.neg)
+	s_entropy = calc_entropy(p,n)
+	print(s_entropy)
 
 
 # def build_tree(max_depth,data_set) :
@@ -47,9 +69,14 @@ def main():
 				temp_list.append(y);
 			attribute_set.attribute_values.append(temp_list)
 
+
 		# print(attribute_set.attribute_names)
 		# print(attribute_set.attribute_values)
 
+	attribute_set.target_attribute = attribute_set.attribute_names[0];
+	attribute_set.neg = attribute_set.attribute_values[0][0]
+	attribute_set.pos = attribute_set.attribute_values[0][1]
+	
 	example_list = []
 	with open('breast-cancer.csv',newline = '') as f :
 		reader = csv.reader(f)
@@ -59,6 +86,7 @@ def main():
 	# print(d1.example_list,d1.sz)
 	new_node = node(1)
 	print(new_node.child)
+	calc_info_gain(0,example_list)
 
 if __name__ == '__main__':
     main()
