@@ -5,13 +5,14 @@ import math
 import os
 
 
-positive="recurrence-events"
-negative="no-recurrence-events"
+
 
 
 class attribute_set:
 	attribute_names = []
 	attribute_values = []
+	positive = "recurrence-events"
+	negative = "no-recurrence-events"
 
 class data_set :
 	
@@ -49,6 +50,8 @@ def calc_entropy(example_list,target):
 	p_pos=0
 	p_neg=0
 	# res=0
+	positive = attribute_set.positive
+	negative = attribute_set.negative
 	for x in example_list:
 		if x[target]==positive:
 			p_pos+=1
@@ -58,6 +61,8 @@ def calc_entropy(example_list,target):
 
 
 def calc_info_gain(attribute_number,example_list,target,attribute_set_all) :
+	positive = attribute_set.positive
+	negative = attribute_set.negative
 	entropy=calc_entropy(example_list,target)
 	# segregated_list=[]
 	Esv=0
@@ -82,13 +87,13 @@ def calc_info_gain(attribute_number,example_list,target,attribute_set_all) :
 
 def pos(example_list):
 	for x in example_list:
-		if x[0]==negative:
+		if x[0]==attribute_set.negative:
 			return 0
 	return 1
 
 def neg(example_list):
 	for x in example_list:
-		if x[0]==positive:
+		if x[0]==attribute_set.positive:
 			return 0
 	return 1
 
@@ -109,12 +114,15 @@ def base_check(max_depth,example_list,all_att,vis):
 
 
 def build_tree(max_depth,example_list,target, attribute_set_all,vis) :
+	positive = attribute_set.positive
+	negative = attribute_set.negative
+
 	if base_check(max_depth,example_list,attribute_set_all,vis)==1 :
 		#make leaf
 		leaf_node=node(target)
 		leaf_node.leaf=1
 		p_count=0
-		n_count=0
+		n_count=0	
 		# assign most common result in verdict
 		for x in example_list:
 			if x[target]==positive:
