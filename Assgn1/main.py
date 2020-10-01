@@ -77,7 +77,7 @@ def calc_info_gain(attribute_number,example_list,target) :
 		sn = 0
 		sv = 0
 		for x in example_list:
-			if x[attribute_number]==attribute_set_all.attribute_values[attribute_number][y]:
+			if x[attribute_number]==attribute_set.attribute_values[attribute_number][y]:
 				sv+=1
 				if x[target]==positive:
 					sp+=1
@@ -96,8 +96,8 @@ def all_pos(example_list,target):
 	positive = attribute_set.positive
 	negative = attribute_set.negative
 
-	for x in example_list
-		if x[0] == attribute_set.negative
+	for x in example_list :
+		if x[target] == attribute_set.negative :
 			return 0
 	return 1
 
@@ -105,12 +105,12 @@ def all_neg(example_list,target):
 	positive = attribute_set.positive
 	negative = attribute_set.negative	
 	for x in example_list:
-		if x[0] == attribute_set.positive :
+		if x[target] == attribute_set.positive :
 			return 0
 	return 1
 
 
-def base_check(max_depth,example_list,all_att,vis):
+def base_check(max_depth,example_list,target,vis):
 	if max_depth == 0:
 		return 1
 	else:
@@ -159,7 +159,7 @@ def build_tree(max_depth,example_list,target,vis) :
 	positive = attribute_set.positive
 	negative = attribute_set.negative
 
-	if base_check(max_depth,example_list,target,attribute_set_all,vis)==1 :
+	if base_check(max_depth,example_list,target,vis)==1 :
 		#make leaf
 		leaf_node=node(target)
 		leaf_node.leaf=1
@@ -187,7 +187,7 @@ def build_tree(max_depth,example_list,target,vis) :
 		for x in vis:
 			if x == 0:
 				# selecting best attribute
-				temp_gain=calc_info_gain(index,example_list,target,attribute_set)
+				temp_gain=calc_info_gain(index,example_list,target)
 				print(index," ",temp_gain, " ", max_depth)
 				if curr_max_gain<=temp_gain:
 					curr_max_gain=temp_gain
@@ -199,12 +199,12 @@ def build_tree(max_depth,example_list,target,vis) :
 		for v in vis:
 			temp_vis.append(v)
 		temp_vis[max_att] = 1
-    temp_example_list = solve_missing_values(example_list,max_att,target) 
+		temp_example_list = solve_missing_values(example_list,max_att,target)
 		present_node = node(max_att)
-		for i in range(len(attribute_set.attribute_values[max_att])):
+		for i in range(len(attribute_set.attribute_values[max_att])) :
 			example_list_v = []
 			for j in temp_example_list:
-				if attribute_set_all.attribute_values[max_att][i] == j[max_att]:
+				if attribute_set.attribute_values[max_att][i] == j[max_att]:
 					example_list_v.append(j)
 			if len(example_list_v) == 0:
 				# add leaf here
@@ -219,8 +219,6 @@ def build_tree(max_depth,example_list,target,vis) :
 						p_count += 1
 					if x[target] == negative:
 						n_count += 1
-
-
 				if p_count >= n_count:
 					branch_node.target_val = positive
 				else:
@@ -305,7 +303,7 @@ def main():
 		vis.append(0)
 	vis[target_attribute]=1
 	print("entropy(S) = ",calc_entropy(example_list,target_attribute))
-	print("gain for 1st att = ",calc_info_gain(1 ,example_list ,target_attribute , attribute_set ) )
+	print("gain for 1st att = ",calc_info_gain(1 ,example_list ,target_attribute) )
 	print(vis)
 	# new_node = build_tree(140, example_list, target_attribute, attribute_set, vis)
 	# print("\nroot_node-->\n",new_node.child)
@@ -316,7 +314,7 @@ def main():
 	# iter for height
 	newnode=[]
 	for x in range(11):
-		newnode.append(build_tree(x, example_list, target_attribute, attribute_set, vis))
+		newnode.append(build_tree(x, example_list, target_attribute,vis))
 
 	print("\ndonez\n")
 	for x in range(11):
