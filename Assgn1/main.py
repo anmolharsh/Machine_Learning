@@ -111,7 +111,7 @@ def base_check(max_depth,example_list,all_att,vis):
 def build_tree(max_depth,example_list,target, attribute_set_all,vis) :
 	if base_check(max_depth,example_list,attribute_set_all,vis)==1 :
 		#make leaf
-		leaf_node=node(0)
+		leaf_node=node(target)
 		leaf_node.leaf=1
 		p_count=0
 		n_count=0
@@ -147,7 +147,8 @@ def build_tree(max_depth,example_list,target, attribute_set_all,vis) :
 					example_list_v.append(j)
 			if len(example_list_v)==0:
 				# add leaf here
-				present_node.leaf=1
+				branch_node=node(target)
+				branch_node.leaf=1
 				p_count=0
 				n_count=0
 				# assign most common result in verdict
@@ -157,13 +158,49 @@ def build_tree(max_depth,example_list,target, attribute_set_all,vis) :
 					if x[target]==negative:
 						n_count+=1
 				if p_count>n_count:
-					present_node.target_val=positive
+					branch_node.target_val=positive
 				else:
-					present_node.target_val=negative
+					branch_node.target_val=negative
+				present_node.child[i]['pointer']=branch_node
 			else:
 				present_node.child[i]['pointer']= build_tree(max_depth-1,example_list_v,target,attribute_set_all,vis)
 
 		return present_node
+
+
+
+
+
+
+def getVerdict(my_node,data_instance,target):
+	if my_node.leaf==1:
+		return my_node.target_val
+	att_num=my_node.attribute_number
+	return getVerdict
+
+
+
+
+
+
+
+
+
+
+
+
+
+def getAccuracy(tree_node,example_list,target):
+	res=0
+	total=0
+	for x in example_list:
+		if x[target]==getVerdict(tree_node,x,target):
+			res+=1
+		total+=1
+	return res/total
+
+
+
 
 
 def main():
@@ -201,8 +238,8 @@ def main():
 	print("gain for 1st att = ",calc_info_gain(1 ,example_list ,target_attribute , attribute_set ) )
 	print(vis)
 	new_node = build_tree(4, example_list, target_attribute, attribute_set, vis)
-	# print(new_node.child)
-	print(new_node.child[4]['pointer'].child)
+	print(new_node.child)
+	# print(new_node.child[4]['pointer'].child)
 
 if __name__ == '__main__':
     main()
