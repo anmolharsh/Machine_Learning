@@ -4,7 +4,7 @@ import sys
 import math
 import os
 import copy
-
+import random
 
 
 
@@ -73,12 +73,25 @@ def calc_info_gain(attribute_number,example_list,target) :
 		sn = 0
 		sv = 0
 		for x in example_list:
-			if x[attribute_number] == attribute_set.attribute_values[attribute_number][y]:
-				sv += 1
-				if x[target] == positive:
-					sp  += 1
-				elif x[target] == negative:
-					sn += 1
+			if x[attribute_number] == '?' :
+				instance = copy.deepcopy(x)
+				instance = solve_missing_values(x,example_list,attribute_number,target)
+
+				if instance[attribute_number] == attribute_set.attribute_values[attribute_number][y]:
+					sv += 1
+					if instance[target] == positive:
+						sp  += 1
+					elif instance[target] == negative:
+						sn += 1
+			else :
+				if x[attribute_number] == attribute_set.attribute_values[attribute_number][y]:
+					sv += 1
+					if x[target] == positive:
+						sp  += 1
+					elif x[target] == negative:
+						sn += 1
+
+				
 		val = (entropy_pnv(sp,sn,sv)*float(sv)/float(len(example_list)))
 		Esv += val
 	return entropy-Esv
@@ -245,17 +258,64 @@ def getVerdict(my_node,data_instance,target):
 def getAccuracy(tree_node,example_list,target):
 	res = 0
 	total = 0
+	#print(attribute_set.attribute_names[tree_node.attribute_number])
 	for x in example_list:
 		predicted = getVerdict(tree_node,x,target)
 		if x[target] == predicted :
 			res += 1
 		total += 1
 
-	print("res=",res)
-	print("total=",total)
-	return res/total
+	# print("res=",res)
+	# print("total=",total)
+	return float(res)/total
 
 
+def find_best_Depth(example_list,target) :
+	best_trainining_set = []
+	best_validation_set = []
+	best_test_set = []
+
+	first_limit = round(len(example_list)*(0.6))
+	second_limit = first_limit + round((len(example_list)*(0.2)))
+	
+	max_accuracy = 0
+	best_depth = -1
+	for i in range(1,11) :
+		sum_accuracy = 0
+		local_max_accuracy = 0
+		local_best_training_set = []
+		local_best_validation_set = []
+		local_best_test_set = []
+		for j in range(10) :
+			random.shuffle(example_list)
+			curr_training_set = example_list[0:first_limit]
+			curr_validation_set = example_list[first_limit:second_limit]
+			curr_test_set = example_list[second_limit:]
+			vis = [0]*len(attribute_set.attribute_names)
+			vis[target] = 1;
+			root = build_tree(i,curr_training_set,target,vis)
+			curr_accuracy = getAccuracy(root,curr_test_set,target)
+			sum_accuracy += curr_accuracy
+			
+			if curr_accuracy > local_max_accuracy :
+				local_best_trainining_set = curr_training_set
+				local_best_validation_set = curr_validation_set
+				local_best_test_set = curr_test_set
+				local_max_accuracy = curr_accuracy
+
+		avg_accuracy = sum_accuracy/float(10)
+		print(i,avg_accuracy)
+		if avg_accuracy > max_accuracy :
+			best_trainining_set = local_best_training_set
+			best_validation_set = local_best_validation_set
+			best_test_set = local_best_test_set
+			max_accuracy = avg_accuracy
+			best_depth = i
+
+		
+		
+	print(best_depth,max_accuracy)	
+	return best_depth		
 
 
 
@@ -281,11 +341,9 @@ def main():
 	d1 = data_set(len(example_list),example_list)	
 
 	target_attribute = 0
-
-	for x in range(11):
-		vis = [0]*len(attribute_set.attribute_names)
-		vis[target_attribute] = 1;
-		getAccuracy(build_tree(x, example_list, target_attribute,vis),example_list,target_attribute)
+	# for x in range(1,10) :
+	# 	print(attribute_set.attribute_names[x],calc_info_gain(x,example_list,target_attribute))
+	find_best_Depth(example_list,target_attribute)
 	
 
 if __name__ == '__main__':
