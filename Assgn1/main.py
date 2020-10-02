@@ -44,6 +44,7 @@ def entropy_pnv(sp,sn,sv):
 	sp = float(sp)/sv
 	sn = float(sn)/sv
 	res = (-1)*(sp*math.log2(sp)+sn*math.log2(sn))
+
 	return res
 
 
@@ -141,7 +142,6 @@ def solve_missing_values(instance,example_list,attribute,target) :
 
 	return new_instance
 
-
 def build_tree(max_depth,example_list,target,vis) :
 	positive = attribute_set.positive
 	negative = attribute_set.negative
@@ -168,7 +168,7 @@ def build_tree(max_depth,example_list,target,vis) :
 	else:
 		max_att = 0
 		index = 0
-		curr_max_gain = 0
+		curr_max_gain = -1000000
 		for x in vis:
 			if x == 0:
 				# selecting best attribute
@@ -182,6 +182,7 @@ def build_tree(max_depth,example_list,target,vis) :
 		temp_vis = vis.copy();
 		temp_vis[max_att] = 1;
 		present_node = node(max_att,example_list)
+
 		for i in range(len(attribute_set.attribute_values[max_att])) :
 
 			example_list_v = []
@@ -241,7 +242,6 @@ def getVerdict(my_node,data_instance,target):
 			return getVerdict(x['pointer'],data_instance,target)
 
 
-
 def getAccuracy(tree_node,example_list,target):
 	res = 0
 	total = 0
@@ -280,12 +280,7 @@ def main():
 
 	d1 = data_set(len(example_list),example_list)	
 
-	vis = []
 	target_attribute = 0
-
-	for x in range(len(attribute_set.attribute_names)):
-		vis.append(0)
-	vis[target_attribute] = 1
 
 	for x in range(11):
 		vis = [0]*len(attribute_set.attribute_names)
