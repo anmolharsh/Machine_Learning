@@ -3,7 +3,7 @@ import csv
 import sys
 import math
 import os
-
+import copy
 
 
 
@@ -23,7 +23,7 @@ class data_set :
 
 class node :
 
-	def __init__(self,attribute_number) :
+	def __init__(self,attribute_number,example_list) :
 		self.attribute_number = attribute_number
 		self.child = []
 		for x in attribute_set.attribute_values[attribute_number] :
@@ -33,19 +33,18 @@ class node :
 			self.child.append(child_content);
 		self.leaf = 0;
 		self.target_val = ""
+		self.example_list = example_list
 
 
 def entropy_pnv(sp,sn,sv):
-	if(sp==sv or sn==sv or sp==0 or sn==0):
+	if(sp == sv or sn == sv or sp == 0 or sn == 0):
 		return 0
+	if sp == sn:
+		return 1
+	sp = float(sp)/sv
+	sn = float(sn)/sv
+	res = (-1)*(sp*math.log2(sp)+sn*math.log2(sn))
 
-	# if sp==sn:
-	# 	return 1
-	# sp=(sp*1)/sv
-	# sn=(sn*1)/sv
-	# res=(-1)*(sp*math.log(sp,2)+sn*math.log(sn,2))
-
-	res=(-1)*(sn*(math.log(sn,2)) + sp*(math.log(sp,2)) - (sn+sp)*(math.log(sv,2)))
 	return res
 
 
@@ -53,7 +52,7 @@ def entropy_pnv(sp,sn,sv):
 def calc_entropy(example_list,target):
 	p_pos = 0
 	p_neg = 0
-	# res=0
+
 	positive = attribute_set.positive
 	negative = attribute_set.negative
 	for x in example_list:
@@ -67,25 +66,21 @@ def calc_entropy(example_list,target):
 def calc_info_gain(attribute_number,example_list,target) :
 	positive = attribute_set.positive
 	negative = attribute_set.negative
-	entropy=calc_entropy(example_list,target) # |S|*Entropy(S)
-	# segregated_list=[]
+	entropy=calc_entropy(example_list,target)
 	Esv = 0
-	# for x in attribute_set.attribute_values[attribute_number]:
-		# segregated_list.append((0,0)) 		# ( #+ , #- )
 	for y in range(len(attribute_set.attribute_values[attribute_number])):
 		sp = 0
 		sn = 0
 		sv = 0
 		for x in example_list:
-			if x[attribute_number]==attribute_set.attribute_values[attribute_number][y]:
-				sv+=1
-				if x[target]==positive:
-					sp+=1
-				elif x[target]==negative:
-					sn+=1
-		Esv+=(entropy_pnv(sp,sn,sv))
-	# print(entropy," ",Esv," ",Esv/len(example_list))
-		# we calculate |S|Entropy(S) - E |Sv|Entropy(Sv) 
+			if x[attribute_number] == attribute_set.attribute_values[attribute_number][y]:
+				sv += 1
+				if x[target] == positive:
+					sp  += 1
+				elif x[target] == negative:
+					sn += 1
+		val = (entropy_pnv(sp,sn,sv)*float(sv)/float(len(example_list)))
+		Esv += val
 	return entropy-Esv
 
 
@@ -114,21 +109,17 @@ def base_check(max_depth,example_list,target,vis):
 		return 1
 	else:
 		if all_pos(example_list,target):
-			# print("all_pos ",max_depth)
 			return 1
 		elif all_neg(example_list,target):
-			# print("all_neg ",max_depth)
 			return 1
 		else:
 			for x in vis:
-				if x==0:
+				if x == 0:
 					return 0
-			# print("no att ",max_depth)
 			return 1
 	return 0
 
-def solve_missing_values(example_list,attribute,target) :
-	new_list = []
+def solve_missing_values(instance,example_list,attribute,target) :
 	attribute_values  = attribute_set.attribute_values[attribute]
 	sz = len(attribute_values)
 	freq_pos = [0]*sz
@@ -142,38 +133,34 @@ def solve_missing_values(example_list,attribute,target) :
 				elif x[target] == attribute_set.negative :
 					freq_neg[i] += 1
 	
-	for x in example_list :
-		new_x = x.copy()
-		if new_x[attribute] == '?' :
-			if new_x[target] == attribute_set.positive :
-				new_x[attribute] = freq_pos.index(max(freq_pos))
-			elif new_x[target] == attribute_set.negative :
-				new_x[attribute] = freq_neg.index(max(freq_neg))
-		new_list.append(new_x)		
+	new_instance = instance.copy()
+	if new_instance[attribute] == '?' :
+			if new_instance[target] == attribute_set.positive :
+				new_instance[attribute] = attribute_values[freq_pos.index(max(freq_pos))]
+			elif new_instance[target] == attribute_set.negative :
+				new_instance[attribute] = attribute_values[freq_neg.index(max(freq_neg))]
 
-	return new_list
+	return new_instance
 
 def build_tree(max_depth,example_list,target,vis) :
 	positive = attribute_set.positive
 	negative = attribute_set.negative
 
-	if base_check(max_depth,example_list,target,vis)==1 :
+	if base_check(max_depth,example_list,target,vis) == 1 :
 		#make leaf
-		leaf_node=node(target)
-		leaf_node.leaf=1
-		p_count=0
-		n_count=0	
-		# print("leaf_node")
+		leaf_node = node(target,example_list)
+		leaf_node.leaf = 1
+		p_count = 0
+		n_count = 0	
 
 		# assign most common result in verdict
 		for x in example_list:
 			if x[target] == positive:
 				p_count += 1
 			if x[target] == negative:
-				n_count += 1
+				n_count += 1	
 
-
-		if p_count >= n_count:
+		if p_count > n_count:
 			leaf_node.target_val = positive
 		else:
 			leaf_node.target_val = negative
@@ -185,64 +172,51 @@ def build_tree(max_depth,example_list,target,vis) :
 		for x in vis:
 			if x == 0:
 				# selecting best attribute
-				temp_gain=calc_info_gain(index,example_list,target)
-				# print(index," ",temp_gain, " ", max_depth)
-				if curr_max_gain<=temp_gain:
-					curr_max_gain=temp_gain
-					max_att=index
-			index+=1
+				temp_gain = calc_info_gain(index,example_list,target)
+				if curr_max_gain <= temp_gain:
+					curr_max_gain = temp_gain
+					max_att = index
+			index += 1
 		# //we divide example_list over max_att
 
-		if curr_max_gain==0:
-			#make leaf
-			leaf_node=node(target)
-			leaf_node.leaf=1
-			p_count=0
-			n_count=0
-			# assign most common result in verdict
-			for x in example_list:
-				if x[target] == positive:
-					p_count += 1
-				if x[target] == negative:
-					n_count += 1
-			if p_count >= n_count:
-				leaf_node.target_val = positive
-			else:
-				leaf_node.target_val = negative
-			return leaf_node
+		temp_vis = vis.copy();
+		temp_vis[max_att] = 1;
+		present_node = node(max_att,example_list)
 
-
-		temp_vis = []
-		for v in vis:
-			temp_vis.append(v)
-		temp_vis[max_att] = 1
-		temp_example_list = solve_missing_values(example_list,max_att,target)
-		present_node = node(max_att)
 		for i in range(len(attribute_set.attribute_values[max_att])) :
+
 			example_list_v = []
-			for j in temp_example_list:
-				if attribute_set.attribute_values[max_att][i] == j[max_att]:
+			for j in example_list:
+				instance = j;
+				if j[max_att] == '?' :
+					instance = solve_missing_values(j,example_list,max_att,target)
+
+				if attribute_set.attribute_values[max_att][i] == instance[max_att]:
 					example_list_v.append(j)
 			if len(example_list_v) == 0:
+				
 				# add leaf here
-				# print("branch leaf ",max_depth)
-				branch_node=node(target)
-				branch_node.leaf=1
-				p_count=0
-				n_count=0
+				branch_node = node(target,example_list_v)
+				branch_node.leaf = 1
+				p_count = 0
+				n_count = 0
+
 				# assign most common result in verdict
-				for x in temp_example_list:
+				for x in example_list:
 					if x[target] == positive:
 						p_count += 1
 					if x[target] == negative:
 						n_count += 1
-				if p_count >= n_count:
+
+				if p_count > n_count:
 					branch_node.target_val = positive
 				else:
 					branch_node.target_val = negative
 				present_node.child[i]['pointer'] = branch_node
+			
 			else:
-				present_node.child[i]['pointer'] = build_tree(max_depth-1,example_list_v,target,vis)
+				present_node.child[i]['pointer'] = build_tree(max_depth-1,example_list_v,target,temp_vis)
+
 		return present_node
 
 
@@ -254,31 +228,29 @@ def build_tree(max_depth,example_list,target,vis) :
 
 
 
-
-
-
-
-
-
-
 def getVerdict(my_node,data_instance,target):
-	if my_node.leaf==1 or my_node==None:
+	if my_node.leaf == 1 :
 		return my_node.target_val
-	att_num=my_node.attribute_number
+
+	att_num = my_node.attribute_number
+	instance = copy.deepcopy(data_instance)
+	
+	if instance[att_num] == '?' :
+		instance = solve_missing_values(instance,my_node.example_list,att_num,target)
 	for x in my_node.child:
-		if x['edge']==data_instance[att_num]:
-			# print(x['edge'])
+		if x['edge'] == instance[att_num]:
 			return getVerdict(x['pointer'],data_instance,target)
-	return attribute_set.positive #strange line
 
 
 def getAccuracy(tree_node,example_list,target):
 	res = 0
 	total = 0
 	for x in example_list:
-		if x[target]==getVerdict(tree_node,x,target):
-			res+=1
-		total+=1
+		predicted = getVerdict(tree_node,x,target)
+		if x[target] == predicted :
+			res += 1
+		total += 1
+
 	print("res=",res)
 	print("total=",total)
 	return res/total
@@ -299,47 +271,22 @@ def main():
 				temp_list.append(y);
 			attribute_set.attribute_values.append(temp_list)
 
-		# print(attribute_set.attribute_names)
-		# print(attribute_set.attribute_values)
 
 	example_list = []
 	with open('breast-cancer.csv',newline = '') as f :
 		reader = csv.reader(f)
 		example_list = list(reader)
-		# print(example_list)
 
 
 	d1 = data_set(len(example_list),example_list)	
-	# print(d1.example_list,d1.sz)
-	# new_node = node(1)
-	# print(new_node.child)
-	vis = []
+
 	target_attribute = 0
-	for x in range(len(attribute_set.attribute_names)):
-		vis.append(0)
-	vis[target_attribute]=1
-	print("entropy(S) = ",calc_entropy(example_list,target_attribute))
-	print("gain for 1st att = ",calc_info_gain(1 ,example_list ,target_attribute) )
-	print(vis)
-	# new_node = build_tree(140, example_list, target_attribute, attribute_set, vis)
-	# print("\nroot_node-->\n",new_node.child)
-	# print(new_node.child[0]['pointer'].child)
-	# getAccuracy(new_node,example_list[0:],target_attribute,vis)
-	# print(vis)
 
-	# iter for height
-	# newnode=[]
-	# for x in range(11):
-	# 	newnode.append(build_tree(x, example_list, target_attribute, attribute_set, vis))
-	newnode=[]
 	for x in range(11):
-		newnode.append(build_tree(x, example_list, target_attribute,vis))
-	print("\ndonez\n")
-	for x in range(11):
-		getAccuracy(newnode[x],example_list,target_attribute)
-
-	# print((-10)/2)
-
+		vis = [0]*len(attribute_set.attribute_names)
+		vis[target_attribute] = 1;
+		getAccuracy(build_tree(x, example_list, target_attribute,vis),example_list,target_attribute)
+	
 
 if __name__ == '__main__':
     main()
