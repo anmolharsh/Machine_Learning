@@ -305,7 +305,7 @@ def same_rank(mynode,f,node_num):
 
 
 def tree_img(tree_node):
-	f=open("addnode.gv","w+")
+	f=open("finaltree.gv","w+")
 	s="digraph{\nnode [shape=box]\n\n"
 	f.write(s)
 	temp=[]
