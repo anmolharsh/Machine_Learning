@@ -23,6 +23,5 @@ To see the image of the tree --> (in the terminal)
 after running : python main.py
 Run: $	dot -Tpng finaltree.gv -o finaltree.png
 
--> g1 & g2 are the graphs formed after running the code.
--> set depth to -1 to allow tree to grow as much as possible
--> to see the plot in 2nd ques. kindly run in jupyter notebook
+Open 'plot.png' to view the plot of Accuracy vs Depth 
+Open 'finaltree.png' to view the tree
