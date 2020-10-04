@@ -484,15 +484,15 @@ def main():
 	print(prune_tree(0,prune_root,prune_root,validation_set,max_accuracy,target_attribute))
 	fig, ax = plt.subplots()  # Create a figure and an axes.
 	# print(x,y)
-	plt.xlim(0, 10)
-	plt.ylim(0, 1.00)
+	plt.xlim(1, 10)
+	plt.ylim(0.5, 1.00)
 	plt.figtext(0.65, 0.20, "BLUE = Training_set" , color='blue')
 	plt.figtext(0.65, 0.15, "RED = Test_set" , color='red')
 	ax.plot(x, y,'red')  # Plot some data on the axes.
 	ax.plot(x, z,'blue')
 	ax.set_xlabel('Depth')  # Add an x-label to the axes.
 	ax.set_ylabel('Average Accuracy')  # Add a y-label to the axes.
-	ax.set_title("Depth of the tree vs Accuracy of the tree")  # Add a title to the axes.
+	ax.set_title("Accuracy of the tree vs Depth of the tree ")  # Add a title to the axes.
 	plt.savefig('plot.png')
 	tree_img(prune_root)
 
