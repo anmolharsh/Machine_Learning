@@ -445,7 +445,7 @@ def prune_tree(depth,top_root,sub_root,validation_set,max_accuracy,target) :
 
 	#print(attribute_set.attribute_names[sub_root.attribute_number], new_accuracy, max_accuracy)
 	if new_accuracy > max_accuracy :
-		print("at depth =",depth,attribute_set.attribute_names[sub_root.attribute_number], " got pruned", new_accuracy, max_accuracy)
+		print("at depth =",depth,attribute_set.attribute_names[sub_root.attribute_number], " before pruning: ", max_accuracy," after pruning: ", new_accuracy)
 		max_accuracy = new_accuracy
 	else :
 		sub_root.leaf = 0
@@ -480,9 +480,12 @@ def main():
 
 	# print(x)
 	# print(y)
+	print("Before pruning: ")
 	print("Best depth =",best_depth,"Maximum Accuracy =",max_accuracy)
+	print("\n")
 	print("Pruning is done at:")
 	final_acc=prune_tree(0,prune_root,prune_root,validation_set,max_accuracy,target_attribute)
+	print("\nAfter pruning:")
 	print("Final maximum accuracy =",final_acc)
 	fig, ax = plt.subplots()  # Create a figure and an axes.
 	# print(x,y)
