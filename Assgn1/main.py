@@ -5,7 +5,8 @@ import math
 import os
 import copy
 import random
-
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 class attribute_set:
@@ -274,20 +275,24 @@ def find_best_Depth(example_list,target) :
 	best_trainining_set = []
 	best_validation_set = []
 	best_test_set = []
+	best_tree = None
 
 	first_limit = round(len(example_list)*(0.6))
 	second_limit = first_limit + round((len(example_list)*(0.2)))
 	
 	max_accuracy = 0
 	best_depth = -1
+	x_points = []
+	y_points = []
 	for i in range(1,11) :
 		sum_accuracy = 0
 		local_max_accuracy = 0
 		local_best_training_set = []
 		local_best_validation_set = []
 		local_best_test_set = []
+		local_best_tree = None
 		for j in range(10) :
-			random.shuffle(example_list)
+			random.Random(i*10).shuffle(example_list)
 			curr_training_set = example_list[0:first_limit]
 			curr_validation_set = example_list[first_limit:second_limit]
 			curr_test_set = example_list[second_limit:]
@@ -302,22 +307,53 @@ def find_best_Depth(example_list,target) :
 				local_best_validation_set = curr_validation_set
 				local_best_test_set = curr_test_set
 				local_max_accuracy = curr_accuracy
+				local_best_tree = root
 
 		avg_accuracy = sum_accuracy/float(10)
-		print(i,avg_accuracy)
+		
+		x_points.append(i)
+		y_points.append(avg_accuracy)
+		
 		if avg_accuracy > max_accuracy :
 			best_trainining_set = local_best_training_set
 			best_validation_set = local_best_validation_set
 			best_test_set = local_best_test_set
 			max_accuracy = avg_accuracy
 			best_depth = i
+			best_tree = local_best_tree
 
 		
+	return best_depth,best_validation_set,best_tree,max_accuracy,x_points,y_points		
+
+def prune_tree(depth,top_root,sub_root,validation_set,max_accuracy,target) :
+
+	if sub_root.leaf == 1 :
+		return 0
+
+	for x in sub_root.child:
+		max_accuracy = max(max_accuracy,prune_tree(depth+1,top_root,x['pointer'],validation_set,max_accuracy,target))
 		
-	print(best_depth,max_accuracy)	
-	return best_depth		
 
+	sub_root.leaf = 1
+	p_count = 0
+	n_count = 0
+	for x in sub_root.example_list :
+		p_count += (x[target] == attribute_set.positive)
+		n_count += (x[target] == attribute_set.negative)
 
+	sub_root.target_val = p_count if p_count >= n_count else n_count
+
+	new_accuracy = getAccuracy(top_root,validation_set,target)
+
+	#print(attribute_set.attribute_names[sub_root.attribute_number], new_accuracy, max_accuracy)
+	if new_accuracy > max_accuracy :
+		print("at depth =",depth,attribute_set.attribute_names[sub_root.attribute_number], " got pruned", new_accuracy, max_accuracy)
+		max_accuracy = new_accuracy
+	else :
+		sub_root.leaf = 0
+		sub_root.target_val = None
+
+	return max_accuracy
 
 def main():
 	with open('attribute_info.txt',newline = '') as f : 	
@@ -341,9 +377,39 @@ def main():
 	d1 = data_set(len(example_list),example_list)	
 
 	target_attribute = 0
-	# for x in range(1,10) :
-	# 	print(attribute_set.attribute_names[x],calc_info_gain(x,example_list,target_attribute))
-	find_best_Depth(example_list,target_attribute)
+
+	best_depth,validation_set,prune_root,max_accuracy,x,y = find_best_Depth(example_list,target_attribute)
+
+	print(best_depth,max_accuracy)
+	print(prune_tree(0,prune_root,prune_root,validation_set,max_accuracy,target_attribute))
+	fig, ax = plt.subplots()  # Create a figure and an axes.
+	print(x,y)
+	ax.plot(x, y)  # Plot some data on the axes.
+	ax.set_xlabel('Depth')  # Add an x-label to the axes.
+	ax.set_ylabel('Average Accuracy')  # Add a y-label to the axes.
+	ax.set_title("Depth of the tree vs Accuracy of the tree")  # Add a title to the axes.
+	plt.savefig('plot.png')
+
+	# seed_values = []
+	# for i in range(150) : 
+	# 	temp_list = copy.deepcopy(example_list)
+	# 	best_depth,validation_set,prune_root,max_accuracy,x,y = find_best_Depth(i,temp_list,target_attribute)
+	# 	if best_depth <= 3 :
+	# 		new_accuracy = prune_tree(0,prune_root,prune_root,validation_set,max_accuracy,target_attribute)
+	# 		if new_accuracy > max_accuracy :
+	# 			seed_values.append(i)
+	# 			print("seed = ", i)
+	# 			print("best_depth = ",best_depth)
+	# 			print("before = ",max_accuracy)
+	# 			print("after = ",new_accuracy,'\n')
+			 
+	# print(seed_values)			
+
+
+		
+		
+
+	
 	
 
 if __name__ == '__main__':
