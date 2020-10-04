@@ -238,6 +238,98 @@ def build_tree(max_depth,example_list,target,vis) :
 
 
 
+#print tree
+
+def add_nodes(mynode,f,node_num):
+	s=""
+	
+	if mynode.leaf==1:
+		s+=str(node_num[0])
+		s+=" [label=\""
+		s+=str(mynode.target_val)
+		if mynode.target_val==attribute_set.positive:
+			s+="\",color=\"seagreen\"]\n"
+		else:
+			s+="\",color=\"red3\"]\n"
+		f.write(s)
+		return ;
+	# node_num+=1
+	s+=str(node_num[0])
+	s+=" [label=\""
+	s+=attribute_set.attribute_names[mynode.attribute_number]
+	s+="\",color=\"purple3\"]\n"
+	f.write(s)
+	for i in mynode.child:
+		node_num[0]+=1
+		add_nodes(i['pointer'],f,node_num)
+	return;
+
+
+def add_edges(mynode,f,node_num):
+	if mynode.leaf==1:
+		return 
+	s=""
+	p_num=node_num[0]
+	for i in mynode.child:
+		node_num[0]+=1
+		s+=str(p_num)
+		s+=" -> "
+		s+=str(node_num[0])
+		s+=" [label=\""
+		s+=i['edge']
+		s+="\"]\n"
+
+		add_edges(i['pointer'],f,node_num)
+	f.write(s)
+	return; 
+
+
+def same_rank(mynode,f,node_num):
+	if mynode.leaf==1:
+		return
+	s=""
+	# s="subgraph cluster_"
+	# s+=str(node_num[0])
+	# s+=" {\n"
+	s+="{rank=same;"
+	for i in mynode.child:
+		node_num[0]+=1
+		s+=str(node_num[0])
+		s+=" ;"
+		same_rank(i['pointer'],f,node_num)
+	# s+=" }\n\t}\n"
+	s+=" }\n"
+	f.write(s)
+	return
+
+
+
+def tree_img(tree_node):
+	f=open("addnode.gv","w+")
+	s="digraph{\nnode [shape=box]\n\n"
+	f.write(s)
+	temp=[]
+	temp.append(1)
+	add_nodes(tree_node,f,temp)
+	# f.close()
+	temp[0]=1
+	add_edges(tree_node,f,temp)
+
+	temp[0]=1
+	# s="subgraph cluster_R {\n"
+	# f.write(s)
+	same_rank(tree_node,f,temp)
+
+	# s="\t\n}\n}\n"
+	s="\n}\n"
+	f.write(s)
+	f.close()
+
+
+
+
+
+
 
 
 
@@ -284,8 +376,10 @@ def find_best_Depth(example_list,target) :
 	best_depth = -1
 	x_points = []
 	y_points = []
+	z_points = [] # 2 graph
 	for i in range(1,11) :
 		sum_accuracy = 0
+		sum_accuracy_training = 0 #2 graph
 		local_max_accuracy = 0
 		local_best_training_set = []
 		local_best_validation_set = []
@@ -301,6 +395,8 @@ def find_best_Depth(example_list,target) :
 			root = build_tree(i,curr_training_set,target,vis)
 			curr_accuracy = getAccuracy(root,curr_test_set,target)
 			sum_accuracy += curr_accuracy
+			curr_accuracy_training = getAccuracy(root,curr_training_set,target)
+			sum_accuracy_training += curr_accuracy_training
 			
 			if curr_accuracy > local_max_accuracy :
 				local_best_trainining_set = curr_training_set
@@ -310,9 +406,11 @@ def find_best_Depth(example_list,target) :
 				local_best_tree = root
 
 		avg_accuracy = sum_accuracy/float(10)
+		avg_accuracy_training = sum_accuracy_training/float(10)
 		
 		x_points.append(i)
 		y_points.append(avg_accuracy)
+		z_points.append(avg_accuracy_training)
 		
 		if avg_accuracy > max_accuracy :
 			best_trainining_set = local_best_training_set
@@ -323,7 +421,7 @@ def find_best_Depth(example_list,target) :
 			best_tree = local_best_tree
 
 		
-	return best_depth,best_validation_set,best_tree,max_accuracy,x_points,y_points		
+	return best_depth,best_validation_set,best_tree,max_accuracy,x_points,y_points,z_points		
 
 def prune_tree(depth,top_root,sub_root,validation_set,max_accuracy,target) :
 
@@ -341,7 +439,7 @@ def prune_tree(depth,top_root,sub_root,validation_set,max_accuracy,target) :
 		p_count += (x[target] == attribute_set.positive)
 		n_count += (x[target] == attribute_set.negative)
 
-	sub_root.target_val = p_count if p_count >= n_count else n_count
+	sub_root.target_val = attribute_set.positive if p_count >= n_count else attribute_set.negative
 
 	new_accuracy = getAccuracy(top_root,validation_set,target)
 
@@ -378,17 +476,25 @@ def main():
 
 	target_attribute = 0
 
-	best_depth,validation_set,prune_root,max_accuracy,x,y = find_best_Depth(example_list,target_attribute)
+	best_depth,validation_set,prune_root,max_accuracy,x,y,z = find_best_Depth(example_list,target_attribute)
 
+	# print(x)
+	# print(y)
 	print(best_depth,max_accuracy)
 	print(prune_tree(0,prune_root,prune_root,validation_set,max_accuracy,target_attribute))
 	fig, ax = plt.subplots()  # Create a figure and an axes.
-	print(x,y)
-	ax.plot(x, y)  # Plot some data on the axes.
+	# print(x,y)
+	plt.xlim(0, 10)
+	plt.ylim(0, 1.00)
+	plt.figtext(0.65, 0.20, "BLUE = Training_set" , color='blue')
+	plt.figtext(0.65, 0.15, "RED = Test_set" , color='red')
+	ax.plot(x, y,'red')  # Plot some data on the axes.
+	ax.plot(x, z,'blue')
 	ax.set_xlabel('Depth')  # Add an x-label to the axes.
 	ax.set_ylabel('Average Accuracy')  # Add a y-label to the axes.
 	ax.set_title("Depth of the tree vs Accuracy of the tree")  # Add a title to the axes.
 	plt.savefig('plot.png')
+	tree_img(prune_root)
 
 	# seed_values = []
 	# for i in range(150) : 
