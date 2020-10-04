@@ -480,8 +480,10 @@ def main():
 
 	# print(x)
 	# print(y)
-	print(best_depth,max_accuracy)
-	print(prune_tree(0,prune_root,prune_root,validation_set,max_accuracy,target_attribute))
+	print("Best depth =",best_depth,"Maximum Accuracy =",max_accuracy)
+	print("Pruning is done at:")
+	final_acc=prune_tree(0,prune_root,prune_root,validation_set,max_accuracy,target_attribute)
+	print("Final maximum accuracy =",final_acc)
 	fig, ax = plt.subplots()  # Create a figure and an axes.
 	# print(x,y)
 	plt.xlim(1, 10)
