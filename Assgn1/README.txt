@@ -12,13 +12,11 @@ $ pip install numpy
 To run the file --> (in the terminal)
 $ python main.py
 
-Parameters : 
-	1) dataset_path : set the dataset path to load the dataset
-	2) depth_input : depth input for the first part 
-	3) ITERATIONS : no. of iterations in the first part (set to 10)
-	4) MAX_DEPTH : no. of depths data we want to get in the 2nd part
-	5) save_model_name : name given to the saved model trained
-	6) load_model_name : name of the model we want to load
+Terminal:
+After running the file we see:
+	Initial best_depth and max_accuracy
+	Pruned nodes and the change in accuracy (new_accuracy, old_accuracy)
+	Final maximum accuracy
 
 
 To see the image of the tree --> (in the terminal)
