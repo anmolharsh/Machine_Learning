@@ -10,7 +10,10 @@ $ pip install numpy
 *** Instructions **
 
 To run the file --> (in the terminal)
-$ python main.py
+First download and extract data file from https://drive.google.com/drive/folders/1BpLqIlO2UHe6Q4XKVUpNdM38UjkG5pvH?usp=sharing
+Extract the data file and the assgn1 zip file in a common folder
+Run:  
+ $ python main.py
 
 Terminal:
 After running the file we see:
@@ -21,7 +24,8 @@ After running the file we see:
 
 To see the image of the tree --> (in the terminal)
 after running : python main.py
-Run: $	dot -Tpng finaltree.gv -o finaltree.png
+Run:
+ $	dot -Tpng finaltree.gv -o finaltree.png
 
 Open 'plot.png' to view the plot of Accuracy vs Depth 
 Open 'finaltree.png' to view the tree
