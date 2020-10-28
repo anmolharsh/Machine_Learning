@@ -282,8 +282,9 @@ def find_best_Depth(example_list,target) :
 	
 	max_accuracy = 0
 	best_depth = -1
-	x_points = []
-	y_points = []
+	x_depth = []
+	y_best = []
+	y_avg = []
 	for i in range(1,11) :
 		sum_accuracy = 0
 		local_max_accuracy = 0
@@ -292,7 +293,7 @@ def find_best_Depth(example_list,target) :
 		local_best_test_set = []
 		local_best_tree = None
 		for j in range(10) :
-			random.Random(i*10).shuffle(example_list)
+			random.Random(10*i).shuffle(example_list)
 			curr_training_set = example_list[0:first_limit]
 			curr_validation_set = example_list[first_limit:second_limit]
 			curr_test_set = example_list[second_limit:]
@@ -311,9 +312,9 @@ def find_best_Depth(example_list,target) :
 
 		avg_accuracy = sum_accuracy/float(10)
 		
-		x_points.append(i)
-		y_points.append(avg_accuracy)
-		
+		x_depth.append(i)
+		y_avg.append(avg_accuracy)
+		y_best.append(local_max_accuracy)
 		if avg_accuracy > max_accuracy :
 			best_trainining_set = local_best_training_set
 			best_validation_set = local_best_validation_set
@@ -323,7 +324,7 @@ def find_best_Depth(example_list,target) :
 			best_tree = local_best_tree
 
 		
-	return best_depth,best_validation_set,best_tree,max_accuracy,x_points,y_points		
+	return best_depth,best_validation_set,best_tree,max_accuracy,x_depth,y_avg,y_best		
 
 def prune_tree(depth,top_root,sub_root,validation_set,max_accuracy,target) :
 
@@ -341,7 +342,7 @@ def prune_tree(depth,top_root,sub_root,validation_set,max_accuracy,target) :
 		p_count += (x[target] == attribute_set.positive)
 		n_count += (x[target] == attribute_set.negative)
 
-	sub_root.target_val = p_count if p_count >= n_count else n_count
+	sub_root.target_val = attribute_set.positive if p_count >= n_count else attribute_set.negative
 
 	new_accuracy = getAccuracy(top_root,validation_set,target)
 
@@ -378,18 +379,18 @@ def main():
 
 	target_attribute = 0
 
-	best_depth,validation_set,prune_root,max_accuracy,x,y = find_best_Depth(example_list,target_attribute)
+	# best_depth,validation_set,prune_root,max_accuracy,x,y_avg,y_best = find_best_Depth(example_list,target_attribute)
 
-	print(best_depth,max_accuracy)
-	print(prune_tree(0,prune_root,prune_root,validation_set,max_accuracy,target_attribute))
-	fig, ax = plt.subplots()  # Create a figure and an axes.
-	print(x,y)
-	ax.plot(x, y)  # Plot some data on the axes.
-	ax.set_xlabel('Depth')  # Add an x-label to the axes.
-	ax.set_ylabel('Average Accuracy')  # Add a y-label to the axes.
-	ax.set_title("Depth of the tree vs Accuracy of the tree")  # Add a title to the axes.
-	plt.savefig('plot.png')
+	# print(x,y_best)
+	# print(best_depth,max_accuracy)
+	# print(prune_tree(0,prune_root,prune_root,validation_set,max_accuracy,target_attribute))
 
+	y = []
+	for x in range(1,11) :
+		vis = [0]*len(attribute_set.attribute_names)
+		vis[target_attribute] = 1;
+		y.append(getAccuracy(build_tree(x,example_list,target_attribute,vis),example_list,target_attribute))
+	print(y)
 	# seed_values = []
 	# for i in range(150) : 
 	# 	temp_list = copy.deepcopy(example_list)
