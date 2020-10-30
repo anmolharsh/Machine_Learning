@@ -18,12 +18,15 @@ def debug(x):
 
 
 class attribute_set :
-	attribute_names = []
-	attribute_values = {}
-	target =  "life_expectancy"
-	target_values = []
-	non_continuous = []
 
+	def __init__(self,attribute_names,attribute_values,target,target_values,non_continuous) :
+		self.attribute_names = attribute_names
+		self.attribute_values = attribute_values
+		self.target =  target
+		self.target_values = target_values
+		self.non_continuous = non_continuous
+
+	
 class probabilities :
 
 	def __init__(self,class_probabilities,attribute_probabilities) :
@@ -39,7 +42,7 @@ def encode(mp) :
 		mp["encoded_values"].append(i)
 
 #incorporate the encoded values into example_list
-def transform_example_list(example_list) :
+def transform_example_list(attribute_set,example_list) :
 	
 	for x in example_list.columns :
 		if attribute_set.attribute_values[x]["continuous"] == 1 or x == attribute_set.target :
@@ -50,7 +53,7 @@ def transform_example_list(example_list) :
 			example_list.at[i,x] = attribute_set.attribute_values[x]["encoded_values"][orig_values.index(data)]
 		
 
-def handle_missing_values(example_list) :
+def handle_missing_values(attribute_set,example_list) :
 	
 	means = example_list.mean(skipna = True).to_dict() #for continuous attributes
 	modes = example_list.mode(dropna = True) 		   #for discrete attributes
@@ -64,11 +67,10 @@ def handle_missing_values(example_list) :
 				else :
 					example_list.at[i,x] = modes.at[0,x]
 
-def compute_probabilities(example_list) :
+def compute_probabilities(attribute_set,example_list) :
 	class_probabilities = {}
 	attribute_probabilities = {}
 	target_col = example_list.columns[len(example_list.columns)-1]
-	debug(target_col)
 	unique_targets = example_list[target_col].array.unique()
 	target_freq = example_list[target_col].value_counts().to_dict()
 
@@ -104,7 +106,7 @@ def calc_gaussian_prob(val,mean,std) :
 	return n/d
 
 
-def calc_accuracy(classifier,test_set,target_values) :
+def calc_accuracy(attribute_set,classifier,test_set,target_values) :
 	correct = 0
 	total = len(test_set.index)
 	for x in test_set.itertuples(index = False) :
@@ -141,11 +143,11 @@ class naive_bayes_classifier :
 		self.probabilities = probabilities
 
 
-def learn_naive_bayes(example_list,target,target_values) :
+def learn_naive_bayes(attribute_set,example_list,target,target_values) :
 
-	return naive_bayes_classifier(compute_probabilities(example_list)) 
+	return naive_bayes_classifier(compute_probabilities(attribute_set,example_list)) 
 
-def five_cross_val(example_list,target,target_values) :
+def five_cross_val(attribute_set,example_list,target,target_values) :
 
 	width = round(len(example_list.index)*0.2)
 	set_a = example_list.iloc[0:width]
@@ -158,57 +160,57 @@ def five_cross_val(example_list,target,target_values) :
 
 	train = pd.concat([set_a,set_b,set_c,set_d])
 	test = set_e
-	classifier = learn_naive_bayes(train,target,target_values)
+	classifier = learn_naive_bayes(attribute_set,train,target,target_values)
 	unique_targets = train[train.columns[-1]].array.unique()
-	s += calc_accuracy(classifier,test,unique_targets)
+	s += calc_accuracy(attribute_set,classifier,test,unique_targets)
 
 	train = pd.concat([set_a,set_b,set_c,set_e])
 	test = set_d
-	classifier = learn_naive_bayes(train,target,target_values)
+	classifier = learn_naive_bayes(attribute_set,train,target,target_values)
 	unique_targets = train[train.columns[-1]].array.unique()
-	s += calc_accuracy(classifier,test,unique_targets)
+	s += calc_accuracy(attribute_set,classifier,test,unique_targets)
 
 	train = pd.concat([set_a,set_b,set_d,set_e])
 	test = set_c
-	classifier = learn_naive_bayes(train,target,target_values)
+	classifier = learn_naive_bayes(attribute_set,train,target,target_values)
 	unique_targets = train[train.columns[-1]].array.unique()
-	s += calc_accuracy(classifier,test,unique_targets)
+	s += calc_accuracy(attribute_set,classifier,test,unique_targets)
 
 	train = pd.concat([set_a,set_c,set_d,set_e])
 	test = set_b
-	classifier = learn_naive_bayes(train,target,target_values)
+	classifier = learn_naive_bayes(attribute_set,train,target,target_values)
 	unique_targets = train[train.columns[-1]].array.unique()
-	s += calc_accuracy(classifier,test,unique_targets)
+	s += calc_accuracy(attribute_set,classifier,test,unique_targets)
 
 	train = pd.concat([set_b,set_c,set_d,set_e])
 	test = set_a
-	classifier = learn_naive_bayes(train,target,target_values)
+	classifier = learn_naive_bayes(attribute_set,train,target,target_values)
 	unique_targets = train[train.columns[-1]].array.unique()
-	s += calc_accuracy(classifier,test,unique_targets)
+	s += calc_accuracy(attribute_set,classifier,test,unique_targets)
 
 	print("Average validation accuracy = ",s/5)
 
 	
-def naive_bayes_classification(training_set,test_set,target) :
+def naive_bayes_classification(attribute_set,training_set,test_set,target) :
 	target_col = training_set.columns[len(training_set.columns)-1]
 	unique_targets = training_set[target_col].array.unique()
 
-	five_cross_val(training_set,target,unique_targets)
+	five_cross_val(attribute_set,training_set,target,unique_targets)
 
-	classifier = learn_naive_bayes(training_set,target,unique_targets)
-	acc = calc_accuracy(classifier,test_set,unique_targets)
+	classifier = learn_naive_bayes(attribute_set,training_set,target,unique_targets)
+	acc = calc_accuracy(attribute_set,classifier,test_set,unique_targets)
 	return acc,classifier
 
 def sample_seiving(example_list) :
 	x = 0
 
-def sequential_backward_selection(classifier,test_set,target_values) :
+def sequential_backward_selection(attribute_set,classifier,test_set,target_values) :
 
 	final_features = test_set.columns.to_list()
 	final_features.remove(attribute_set.target)
 	removed_features = []
 
-	acc = calc_accuracy(classifier,test_set,target_values)
+	acc = calc_accuracy(attribute_set,classifier,test_set,target_values)
 
 	for i in range(len(test_set.columns)) :
 		curr_acc = -1
@@ -217,7 +219,7 @@ def sequential_backward_selection(classifier,test_set,target_values) :
 			temp_removed = removed_features.copy()
 			temp_removed.append(x)
 			temp_test_set = test_set.drop(columns = temp_removed)
-			temp_acc = calc_accuracy(classifier,temp_test_set,target_values)
+			temp_acc = calc_accuracy(attribute_set,classifier,temp_test_set,target_values)
 			if temp_acc > curr_acc :
 				curr_acc = temp_acc
 				removed_feature = x
@@ -233,7 +235,7 @@ def sequential_backward_selection(classifier,test_set,target_values) :
 
 
 
-def apply_pca(example_list_orig):
+def apply_pca(attribute_set,example_list_orig):
 	example_list = example_list_orig
 	example_list = example_list.drop(example_list.columns[-1],axis=1)
 
@@ -310,7 +312,7 @@ def apply_pca(example_list_orig):
 	
 	# # # we do five fold cross validation
 	acc = 0
-	acc,classifier = naive_bayes_classification(training_set, test_set, attribute_set.target)
+	acc,classifier = naive_bayes_classification(attribute_set,training_set, test_set, attribute_set.target)
 	print("Test accuracy after step 2 = ",acc)
 	print(x_pca)
 
@@ -321,7 +323,13 @@ def apply_pca(example_list_orig):
 def main() :
 
 	example_list = pd.read_csv("Train_E.csv")
-	attribute_set.attribute_names = example_list.columns
+	attribute_names = []
+	attribute_values = {}
+	target =  "life_expectancy"
+	target_values = []
+	non_continuous = []
+
+	attribute_names = example_list.columns
 	print(example_list)
 	#building attribtue-set
 	for x in example_list.columns :
@@ -330,18 +338,19 @@ def main() :
 		mp["orig_values"] = []
 		mp["encoded_values"] = []
 		if len(example_list[x].array.unique()) <= 5 :
-			attribute_set.non_continuous.append(x)
+			non_continuous.append(x)
 			mp["continuous"] = 0
-		attribute_set.attribute_values[x] = mp
+		attribute_values[x] = mp
 
 	for x,y in example_list.iteritems() :
-		if attribute_set.attribute_values[x]["continuous"] == 1 :
+		if attribute_values[x]["continuous"] == 1 :
 			continue
-		attribute_set.attribute_values[x]["orig_values"] = list(set(y.tolist()))
-		encode(attribute_set.attribute_values[x])
+		attribute_values[x]["orig_values"] = list(set(y.tolist()))
+		encode(attribute_values[x])
 
-
-	transform_example_list(example_list)
+	attributes = attribute_set(attribute_names,attribute_values,target,target_values,non_continuous)
+	print(attributes.attribute_values)
+	transform_example_list(attributes,example_list)
 
 	#dividng the example list into training set (80%) and test set (20%) 
 	example_list = example_list.sample(frac = 1)
@@ -350,14 +359,14 @@ def main() :
 	test_set = example_list.iloc[lim:]
 
 	#handling the missing values
-	handle_missing_values(training_set)
-	handle_missing_values(test_set)
+	handle_missing_values(attributes,training_set)
+	handle_missing_values(attributes,test_set)
 
 
-	apply_pca(example_list)
+	#apply_pca(attributes,example_list)
 
 
-	"""
+	
 	#normalization using sklearn library
 	scaler = preprocessing.MinMaxScaler()
 	training_set = pd.DataFrame(scaler.fit_transform(training_set))
@@ -366,18 +375,20 @@ def main() :
 	#renaming colum labels
 	mp = {}
 	for x in test_set.columns :
-		mp[x] = attribute_set.attribute_names[x]
+		mp[x] = attributes.attribute_names[x]
 	test_set = test_set.rename(columns = mp)
 	training_set = training_set.rename(columns = mp)
 
+	print(training_set)
+
 	#performing Naive-Bayes Classification with 5 fold Cross Validation
-	acc,classifier = naive_bayes_classification(training_set,test_set,attribute_set.target)
+	acc,classifier = naive_bayes_classification(attributes,training_set,test_set,attributes.target)
 
 	print("Final test accuracy = ",acc)
 
 	#peforming Sequential Backward Selection to reduce the number of features
 	target_col = training_set.columns[len(training_set.columns)-1]
-	final_features,removed_features = sequential_backward_selection(classifier,test_set,training_set[target_col].array.unique())
+	final_features,removed_features = sequential_backward_selection(attributes,classifier,test_set,training_set[target_col].array.unique())
 
 	print("Number of features removed :",len(removed_features))
 	print("The final set of features are :",final_features)
@@ -387,15 +398,9 @@ def main() :
 	new_train = training_set.drop(columns = removed_features)
 	new_test = test_set.drop(columns = removed_features)
 
-	acc,classifier = naive_bayes_classification(new_train,new_test,attribute_set.target)
+	acc,classifier = naive_bayes_classification(attributes,new_train,new_test,attributes.target)
 
 	print("Final test accuracy = ",acc)
-
-	print(removed_features)
-	print(new_train)
-
-	"""
-
 
 
 
