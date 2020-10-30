@@ -330,6 +330,11 @@ def main() :
 	handle_missing_values(training_set)
 	handle_missing_values(test_set)
 
+
+	apply_pca(example_list)
+
+
+
 	#normalization using sklearn library
 	scaler = preprocessing.MinMaxScaler()
 	training_set = pd.DataFrame(scaler.fit_transform(training_set))
