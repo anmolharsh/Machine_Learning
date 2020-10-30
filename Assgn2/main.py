@@ -60,7 +60,7 @@ def handle_missing_values(example_list) :
 def compute_probabilities(example_list) :
 	class_probabilities = {}
 	attribute_probabilities = {}
-	target_col = len(example_list.columns)-1
+	target_col = example_list.columns[len(example_list.columns)-1]
 	unique_targets = example_list[target_col].array.unique()
 	target_freq = example_list[target_col].value_counts().to_dict()
 
@@ -71,10 +71,9 @@ def compute_probabilities(example_list) :
 		sz = target_freq[y]
 		targ_df = example_list[example_list[target_col] == y]
 		for x in example_list.columns :
-			name = attribute_set.attribute_names[x]
-			if name == attribute_set.target :
+			if x == attribute_set.target :
 				continue
-			if attribute_set.attribute_values[name]["continuous"] == 0 :
+			if attribute_set.attribute_values[x]["continuous"] == 0 :
 				col_values = example_list[x].array.unique()
 				for i in col_values :
 					temp_df = example_list[(example_list[x] == i) & (example_list[target_col] == y)]
@@ -105,28 +104,24 @@ def calc_accuracy(classifier,test_set,target_values) :
 		ans = -1
 		for targ in target_values :
 			prob = classifier.probabilities.class_probabilities[targ]
-			for y in test_set.columns :
-				name = attribute_set.attribute_names[y]
+			for y,name in zip(range(len(test_set.columns)),test_set.columns) :
 				if name == attribute_set.target :
 					continue
 				if attribute_set.attribute_values[name]["continuous"] == 0 :
-					curr_prob = classifier.probabilities.attribute_probabilities[(y,x[y],targ)]
-					prob *= curr_prob
-					#print("for non-continuous attribute col = ",y," having value = ",x[y]," and target = ",targ, " probability = ",curr_prob)
+					curr_prob = classifier.probabilities.attribute_probabilities[(name,x[y],targ)]
+					prob *= curr_prob	
 				else :
-					tpl = classifier.probabilities.attribute_probabilities[y,targ]
+					tpl = classifier.probabilities.attribute_probabilities[name,targ]
 					mean = tpl[0]
 					std = tpl[1]
 					curr_prob = calc_gaussian_prob(x[y],mean,std)
 					prob *= curr_prob
-					#print("for continuous attribute col = ",y," having value = ",x[y]," and target = ",targ, " probability = ",curr_prob)
-			#print("combined probability = ",prob)
+					
 			if prob > max_prob :
 				max_prob = prob
 				ans = targ
 		if ans == x[len(test_set.columns)-1] :
 			correct += 1
-		#print("\n\n")
 
 	return correct/total
 
@@ -156,51 +151,78 @@ def five_cross_val(example_list,target,target_values) :
 	train = pd.concat([set_a,set_b,set_c,set_d])
 	test = set_e
 	classifier = learn_naive_bayes(train,target,target_values)
-	unique_targets = train[len(train.columns)-1].array.unique()
+	unique_targets = train[train.columns[-1]].array.unique()
 	s += calc_accuracy(classifier,test,unique_targets)
 
 	train = pd.concat([set_a,set_b,set_c,set_e])
 	test = set_d
 	classifier = learn_naive_bayes(train,target,target_values)
-	unique_targets = train[len(train.columns)-1].array.unique()
+	unique_targets = train[train.columns[-1]].array.unique()
 	s += calc_accuracy(classifier,test,unique_targets)
 
 	train = pd.concat([set_a,set_b,set_d,set_e])
 	test = set_c
 	classifier = learn_naive_bayes(train,target,target_values)
-	unique_targets = train[len(train.columns)-1].array.unique()
+	unique_targets = train[train.columns[-1]].array.unique()
 	s += calc_accuracy(classifier,test,unique_targets)
 
 	train = pd.concat([set_a,set_c,set_d,set_e])
 	test = set_b
 	classifier = learn_naive_bayes(train,target,target_values)
-	unique_targets = train[len(train.columns)-1].array.unique()
+	unique_targets = train[train.columns[-1]].array.unique()
 	s += calc_accuracy(classifier,test,unique_targets)
 
 	train = pd.concat([set_b,set_c,set_d,set_e])
 	test = set_a
 	classifier = learn_naive_bayes(train,target,target_values)
-	unique_targets = train[len(train.columns)-1].array.unique()
+	unique_targets = train[train.columns[-1]].array.unique()
 	s += calc_accuracy(classifier,test,unique_targets)
 
 	print("Average validation accuracy = ",s/5)
 
 	
 def naive_bayes_classification(training_set,test_set,target) :
-	unique_targets = training_set[len(training_set.columns)-1].array.unique()
+	target_col = training_set.columns[len(training_set.columns)-1]
+	unique_targets = training_set[target_col].array.unique()
 
 	five_cross_val(training_set,target,unique_targets)
 
 	classifier = learn_naive_bayes(training_set,target,unique_targets)
 	acc = calc_accuracy(classifier,test_set,unique_targets)
-
 	return acc,classifier
 
 def sample_seiving(example_list) :
 	x = 0
 
-def sequential_backward_selection(classifier,example_list) :
-	x = 0
+def sequential_backward_selection(classifier,test_set,target_values) :
+
+	final_features = test_set.columns.to_list()
+	final_features.remove(attribute_set.target)
+	removed_features = []
+
+	acc = calc_accuracy(classifier,test_set,target_values)
+
+	for i in range(len(test_set.columns)) :
+		curr_acc = -1
+		removed_feature = ""
+		for x in final_features :
+			temp_removed = removed_features.copy()
+			temp_removed.append(x)
+			temp_test_set = test_set.drop(columns = temp_removed)
+			temp_acc = calc_accuracy(classifier,temp_test_set,target_values)
+			if temp_acc > curr_acc :
+				curr_acc = temp_acc
+				removed_feature = x
+		if curr_acc >= acc :
+			final_features.remove(x)
+			removed_features.append(x)
+			acc = curr_acc
+		else :
+			break
+
+	return final_features,removed_features
+	
+
 
 def main() :
 
@@ -242,7 +264,31 @@ def main() :
 	training_set = pd.DataFrame(scaler.fit_transform(training_set))
 	test_set = pd.DataFrame(scaler.fit_transform(test_set))
 
+	#renaming colum labels
+	mp = {}
+	for x in test_set.columns :
+		mp[x] = attribute_set.attribute_names[x]
+	test_set = test_set.rename(columns = mp)
+	training_set = training_set.rename(columns = mp)
+
+	#performing Naive-Bayes Classification with 5 fold Cross Validation
 	acc,classifier = naive_bayes_classification(training_set,test_set,attribute_set.target)
+
+	print("Final test accuracy = ",acc)
+
+	#peforming Sequential Backward Selection to reduce the number of features
+	target_col = training_set.columns[len(training_set.columns)-1]
+	final_features,removed_features = sequential_backward_selection(classifier,test_set,training_set[target_col].array.unique())
+
+	print("Number of features removed :",len(removed_features))
+	print("The final set of features are :",final_features)
+
+	print("Performing 5-Cross Validation on the new set of features")
+
+	new_train = training_set.drop(columns = removed_features)
+	new_test = test_set.drop(columns = removed_features)
+
+	acc,classifier = naive_bayes_classification(new_train,new_test,attribute_set.target)
 
 	print("Final test accuracy = ",acc)
 
