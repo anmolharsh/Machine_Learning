@@ -97,24 +97,24 @@ def calc_gaussian_prob(val,mean,std) :
 	return n/d
 
 
-def calc_accuracy(prob_class,test_set,target_values) :
+def calc_accuracy(classifier,test_set,target_values) :
 	correct = 0
 	total = len(test_set.index)
 	for x in test_set.itertuples(index = False) :
 		max_prob = -1;
 		ans = -1
 		for targ in target_values :
-			prob = prob_class.class_probabilities[targ]
+			prob = classifier.probabilities.class_probabilities[targ]
 			for y in test_set.columns :
 				name = attribute_set.attribute_names[y]
 				if name == attribute_set.target :
 					continue
 				if attribute_set.attribute_values[name]["continuous"] == 0 :
-					curr_prob = prob_class.attribute_probabilities[(y,x[y],targ)]
+					curr_prob = classifier.probabilities.attribute_probabilities[(y,x[y],targ)]
 					prob *= curr_prob
 					#print("for non-continuous attribute col = ",y," having value = ",x[y]," and target = ",targ, " probability = ",curr_prob)
 				else :
-					tpl = prob_class.attribute_probabilities[y,targ]
+					tpl = classifier.probabilities.attribute_probabilities[y,targ]
 					mean = tpl[0]
 					std = tpl[1]
 					curr_prob = calc_gaussian_prob(x[y],mean,std)
@@ -132,12 +132,15 @@ def calc_accuracy(prob_class,test_set,target_values) :
 
 
 
-		
+class naive_bayes_classifier :
+
+	def __init__(self,probabilities) :
+		self.probabilities = probabilities
 
 
 def learn_naive_bayes(example_list,target,target_values) :
 
-	return compute_probabilities(example_list)
+	return naive_bayes_classifier(compute_probabilities(example_list)) 
 
 def five_cross_val(example_list,target,target_values) :
 
@@ -152,33 +155,33 @@ def five_cross_val(example_list,target,target_values) :
 
 	train = pd.concat([set_a,set_b,set_c,set_d])
 	test = set_e
-	prob_class = learn_naive_bayes(train,target,target_values)
+	classifier = learn_naive_bayes(train,target,target_values)
 	unique_targets = train[len(train.columns)-1].array.unique()
-	s += calc_accuracy(prob_class,test,unique_targets)
+	s += calc_accuracy(classifier,test,unique_targets)
 
 	train = pd.concat([set_a,set_b,set_c,set_e])
 	test = set_d
-	prob_class = learn_naive_bayes(train,target,target_values)
+	classifier = learn_naive_bayes(train,target,target_values)
 	unique_targets = train[len(train.columns)-1].array.unique()
-	s += calc_accuracy(prob_class,test,unique_targets)
+	s += calc_accuracy(classifier,test,unique_targets)
 
 	train = pd.concat([set_a,set_b,set_d,set_e])
 	test = set_c
-	prob_class = learn_naive_bayes(train,target,target_values)
+	classifier = learn_naive_bayes(train,target,target_values)
 	unique_targets = train[len(train.columns)-1].array.unique()
-	s += calc_accuracy(prob_class,test,unique_targets)
+	s += calc_accuracy(classifier,test,unique_targets)
 
 	train = pd.concat([set_a,set_c,set_d,set_e])
 	test = set_b
-	prob_class = learn_naive_bayes(train,target,target_values)
+	classifier = learn_naive_bayes(train,target,target_values)
 	unique_targets = train[len(train.columns)-1].array.unique()
-	s += calc_accuracy(prob_class,test,unique_targets)
+	s += calc_accuracy(classifier,test,unique_targets)
 
 	train = pd.concat([set_b,set_c,set_d,set_e])
 	test = set_a
-	prob_class = learn_naive_bayes(train,target,target_values)
+	classifier = learn_naive_bayes(train,target,target_values)
 	unique_targets = train[len(train.columns)-1].array.unique()
-	s += calc_accuracy(prob_class,test,unique_targets)
+	s += calc_accuracy(classifier,test,unique_targets)
 
 	print("Average validation accuracy = ",s/5)
 
@@ -188,12 +191,16 @@ def naive_bayes_classification(training_set,test_set,target) :
 
 	five_cross_val(training_set,target,unique_targets)
 
-	prob_class = learn_naive_bayes(training_set,target,unique_targets)
-	acc = calc_accuracy(prob_class,test_set,unique_targets)
+	classifier = learn_naive_bayes(training_set,target,unique_targets)
+	acc = calc_accuracy(classifier,test_set,unique_targets)
 
-	print("Final test accuracy = ",acc)
+	return acc,classifier
 
+def sample_seiving(example_list) :
+	x = 0
 
+def sequential_backward_selection(classifier,example_list) :
+	x = 0
 
 def main() :
 
@@ -235,7 +242,9 @@ def main() :
 	training_set = pd.DataFrame(scaler.fit_transform(training_set))
 	test_set = pd.DataFrame(scaler.fit_transform(test_set))
 
-	naive_bayes_classification(training_set,test_set,attribute_set.target)
+	acc,classifier = naive_bayes_classification(training_set,test_set,attribute_set.target)
+
+	print("Final test accuracy = ",acc)
 
 
 
