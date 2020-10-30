@@ -235,9 +235,8 @@ def sequential_backward_selection(attribute_set,classifier,test_set,target_value
 
 
 
-def apply_pca(attribute_set,example_list_orig):
-	example_list = example_list_orig
-	example_list = example_list.drop(example_list.columns[-1],axis=1)
+def apply_pca(example_list_orig):
+	example_list = example_list_orig.drop(example_list_orig.columns[-1],axis=1)	
 
 	df = pd.DataFrame(example_list, columns = example_list.columns)
 	pca = PCA(n_components=len(df.columns))
@@ -267,54 +266,48 @@ def apply_pca(attribute_set,example_list_orig):
 		else :
 			break
 	# print(comp_num)
-	print("yoyoyooyoyoyoyoyoyoyoyoyoyo	")
 	pca_new = PCA(n_components = comp_num)
 	pca_new.fit(scaled_data)
 	x_pca = pca_new.transform(scaled_data)
-	# x_pca[:, :-1] = example_list[:,:-1]
-	# print(example_list.iloc[:, -1:])
+
 	example_list = example_list_orig.iloc[:, -1:]
-	# print(type(x_pca))
-	# print(type(example_list))
+	
 	example_list = example_list.to_numpy()
-	# print(type(example_list))
+
 	x_pca = np.column_stack((x_pca, example_list))
-	# np.append(x_pca, example_list, axis =1)
-	# print(x_pca.shape)
-	# print(example_list.shape)
-	# x_pca[example_list]
-	# print(x_pca[:, -1:])
-	# lim = round((0.8)*len(x_pca.index))
-	# training_set = x_pca.iloc[0:lim]
-	# test_set = x_pca.iloc[lim:]
+	
+	x_pca = pd.DataFrame(data = x_pca) 
+
+	print(x_pca)
+	attribute_names = []
+	attribute_values = {}
+	target =  x_pca.columns[len(x_pca.columns)-1]
+	target_values = []
+	non_continuous = []
+
+	attribute_names = x_pca.columns
+	for x in x_pca.columns :
+		mp = {}
+		mp["continuous"] = 1
+		mp["orig_values"] = []
+		mp["encoded_values"] = []
+		attribute_values[x] = mp
+
+	attributes = attribute_set(attribute_names,attribute_values,target,target_values,non_continuous)
+	
+
 
 	msk = np.random.rand(len(x_pca)) <= 0.8
 	training_set = x_pca[msk]
 	test_set = x_pca[~msk]
 
-	# # print(training_set)
-	# # print(test_set)
-	
-	# #normalization using sklearn library
-	scaler1 = preprocessing.MinMaxScaler()
-	training_set = pd.DataFrame(scaler1.fit_transform(training_set))
-	test_set = pd.DataFrame(scaler1.fit_transform(test_set))
-
-	mp = {}
-	for x in range(comp_num) :
-		mp[x] = attribute_set.attribute_names[x]
-	mp[comp_num] = attribute_set.target
-	test_set = test_set.rename(columns = mp)
-	training_set = training_set.rename(columns = mp)
-
-	print(training_set)
-	print(test_set)
+	training_set = pd.DataFrame(data = training_set) 
+	test_set = pd.DataFrame(data = test_set) 
 	
 	# # # we do five fold cross validation
 	acc = 0
-	acc,classifier = naive_bayes_classification(attribute_set,training_set, test_set, attribute_set.target)
+	acc,classifier = naive_bayes_classification(attributes,training_set, test_set, attributes.target)
 	print("Test accuracy after step 2 = ",acc)
-	print(x_pca)
 
 
 
@@ -349,7 +342,7 @@ def main() :
 		encode(attribute_values[x])
 
 	attributes = attribute_set(attribute_names,attribute_values,target,target_values,non_continuous)
-	print(attributes.attribute_values)
+	# print(attributes.attribute_values)
 	transform_example_list(attributes,example_list)
 
 	#dividng the example list into training set (80%) and test set (20%) 
@@ -363,10 +356,10 @@ def main() :
 	handle_missing_values(attributes,test_set)
 
 
-	#apply_pca(attributes,example_list)
+	apply_pca(example_list)
 
 
-	
+	"""
 	#normalization using sklearn library
 	scaler = preprocessing.MinMaxScaler()
 	training_set = pd.DataFrame(scaler.fit_transform(training_set))
@@ -401,7 +394,7 @@ def main() :
 	acc,classifier = naive_bayes_classification(attributes,new_train,new_test,attributes.target)
 
 	print("Final test accuracy = ",acc)
-
+	"""
 
 
 
