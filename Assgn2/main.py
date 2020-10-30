@@ -183,6 +183,15 @@ def five_cross_val(example_list,target,target_values) :
 	print("Average validation accuracy = ",s/5)
 
 	
+def naive_bayes_classification(training_set,test_set,target) :
+	unique_targets = training_set[len(training_set.columns)-1].array.unique()
+
+	five_cross_val(training_set,target,unique_targets)
+
+	prob_class = learn_naive_bayes(training_set,target,unique_targets)
+	acc = calc_accuracy(prob_class,test_set,unique_targets)
+
+	print("Final test accuracy = ",acc)
 
 
 
@@ -226,15 +235,9 @@ def main() :
 	training_set = pd.DataFrame(scaler.fit_transform(training_set))
 	test_set = pd.DataFrame(scaler.fit_transform(test_set))
 
-	
-	
-	unique_targets = training_set[len(training_set.columns)-1].array.unique()
+	naive_bayes_classification(training_set,test_set,attribute_set.target)
 
-	five_cross_val(training_set,attribute_set.target,unique_targets)
-	prob_class = learn_naive_bayes(training_set,attribute_set.target,unique_targets)
-	acc = calc_accuracy(prob_class,test_set,unique_targets)
 
-	print("Final test accuracy = ",acc)
 
 
 
