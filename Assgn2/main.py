@@ -235,6 +235,44 @@ def sequential_backward_selection(attribute_set,classifier,test_set,target_value
 
 
 
+def remove_outliers(data):
+	# print(data)
+	limit = []
+	for x in data:
+		limit.append(data[x].mean())
+	i=0
+	for x in data:
+		limit[i] += 3*data[x].std()
+		i += 1
+	# print(limit)
+	mark = []
+
+	for i in range(len(data)):
+		mark.append(0)
+	# print(mark)
+	for i in range(len(data)):
+		for j in range(len(data.columns)):
+			if data.iloc[i,j] >= limit[j]:
+				mark[i] += 1
+
+	mark = pd.DataFrame(mark)
+	# print(mark)
+	# print(data)
+	i = 0
+	for x in range(len(mark)):
+		# condition/threshold
+		if mark.iloc[x,0] > 0:
+			data = data.drop(x , axis = 0)
+
+	# print(data)
+	return data
+
+
+
+
+
+
+
 def apply_pca(example_list_orig):
 	example_list = example_list_orig.drop(example_list_orig.columns[-1],axis=1)	
 
@@ -354,10 +392,13 @@ def main() :
 	#handling the missing values
 	handle_missing_values(attributes,training_set)
 	handle_missing_values(attributes,test_set)
+	example_list = example_list.reset_index()
+	example_list = example_list.drop(columns='index')
 
-
+	# print(example_list)
 	apply_pca(example_list)
-
+	new_3a = remove_outliers(example_list)
+	print(new_3a)
 
 	"""
 	#normalization using sklearn library
