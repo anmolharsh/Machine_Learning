@@ -12,6 +12,11 @@ from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
+
+def debug(x):
+	print("\tT: ",x)
+
+
 class attribute_set :
 	attribute_names = []
 	attribute_values = {}
@@ -63,6 +68,7 @@ def compute_probabilities(example_list) :
 	class_probabilities = {}
 	attribute_probabilities = {}
 	target_col = example_list.columns[len(example_list.columns)-1]
+	debug(target_col)
 	unique_targets = example_list[target_col].array.unique()
 	target_freq = example_list[target_col].value_counts().to_dict()
 
@@ -227,7 +233,10 @@ def sequential_backward_selection(classifier,test_set,target_values) :
 
 
 
-def apply_pca(example_list):
+def apply_pca(example_list_orig):
+	example_list = example_list_orig
+	example_list = example_list.drop(example_list.columns[-1],axis=1)
+
 	df = pd.DataFrame(example_list, columns = example_list.columns)
 	pca = PCA(n_components=len(df.columns))
 	scaler=StandardScaler()
@@ -240,7 +249,6 @@ def apply_pca(example_list):
 	for i in range(1,len(df.columns)+1):
 		x_label.append(i)
 	
-	# print("yoyoyooyoyoyoyoyoyoyoyoyoyo	")
 	fig, ax = plt.subplots()  # Create a figure and an axes.
 	plt.xlim(0, 25)
 	plt.ylim(0.0, 1.01)
@@ -257,10 +265,23 @@ def apply_pca(example_list):
 		else :
 			break
 	# print(comp_num)
+	print("yoyoyooyoyoyoyoyoyoyoyoyoyo	")
 	pca_new = PCA(n_components = comp_num)
 	pca_new.fit(scaled_data)
 	x_pca = pca_new.transform(scaled_data)
-
+	# x_pca[:, :-1] = example_list[:,:-1]
+	# print(example_list.iloc[:, -1:])
+	example_list = example_list_orig.iloc[:, -1:]
+	# print(type(x_pca))
+	# print(type(example_list))
+	example_list = example_list.to_numpy()
+	# print(type(example_list))
+	x_pca = np.column_stack((x_pca, example_list))
+	# np.append(x_pca, example_list, axis =1)
+	# print(x_pca.shape)
+	# print(example_list.shape)
+	# x_pca[example_list]
+	# print(x_pca[:, -1:])
 	# lim = round((0.8)*len(x_pca.index))
 	# training_set = x_pca.iloc[0:lim]
 	# test_set = x_pca.iloc[lim:]
@@ -269,27 +290,29 @@ def apply_pca(example_list):
 	training_set = x_pca[msk]
 	test_set = x_pca[~msk]
 
-	# print(training_set)
-	# print(test_set)
+	# # print(training_set)
+	# # print(test_set)
 	
-	#normalization using sklearn library
+	# #normalization using sklearn library
 	scaler1 = preprocessing.MinMaxScaler()
 	training_set = pd.DataFrame(scaler1.fit_transform(training_set))
 	test_set = pd.DataFrame(scaler1.fit_transform(test_set))
 
-	# mp = {}
-	# for x in test_set.columns :
-	# 	mp[x] = attribute_set.attribute_names[x]
-	# test_set = test_set.rename(columns = mp)
-	# training_set = training_set.rename(columns = mp)
+	mp = {}
+	for x in range(comp_num) :
+		mp[x] = attribute_set.attribute_names[x]
+	mp[comp_num] = attribute_set.target
+	test_set = test_set.rename(columns = mp)
+	training_set = training_set.rename(columns = mp)
 
+	print(training_set)
+	print(test_set)
 	
-	# print(training_set)
-	# print(test_set)
-	# # we do five fold cross validation
+	# # # we do five fold cross validation
 	acc = 0
-	# acc,classifier = naive_bayes_classification(training_set, test_set, attribute_set.target)
+	acc,classifier = naive_bayes_classification(training_set, test_set, attribute_set.target)
 	print("Test accuracy after step 2 = ",acc)
+	print(x_pca)
 
 
 
@@ -334,7 +357,7 @@ def main() :
 	apply_pca(example_list)
 
 
-
+	"""
 	#normalization using sklearn library
 	scaler = preprocessing.MinMaxScaler()
 	training_set = pd.DataFrame(scaler.fit_transform(training_set))
@@ -368,7 +391,10 @@ def main() :
 
 	print("Final test accuracy = ",acc)
 
+	print(removed_features)
+	print(new_train)
 
+	"""
 
 
 
