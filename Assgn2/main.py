@@ -18,8 +18,12 @@ class attribute_set :
 	non_continuous = []
 
 class probabilities :
-	class_probabilties = {}
-	attribute_probabilites = {}
+
+	def __init__(self,class_probabilities,attribute_probabilities) :
+		self.class_probabilities = class_probabilities
+		self.attribute_probabilities = attribute_probabilities
+
+	
 
 #encode the categorical attributes using integer encoding
 def encode(mp) :
@@ -54,18 +58,18 @@ def handle_missing_values(example_list) :
 					example_list.at[i,x] = modes.at[0,x]
 
 def compute_probabilities(example_list) :
+	class_probabilities = {}
+	attribute_probabilities = {}
 	target_col = len(example_list.columns)-1
 	unique_targets = example_list[target_col].array.unique()
-	probabilities.target_values = unique_targets
 	target_freq = example_list[target_col].value_counts().to_dict()
 
 	for x in unique_targets :
-		probabilities.class_probabilties[x] = target_freq[x]/(len(example_list.index))
+		class_probabilities[x] = target_freq[x]/(len(example_list.index))
 
 	for y in unique_targets :
 		sz = target_freq[y]
 		targ_df = example_list[example_list[target_col] == y]
-		#print(targ_df)
 		for x in example_list.columns :
 			name = attribute_set.attribute_names[x]
 			if name == attribute_set.target :
@@ -74,13 +78,13 @@ def compute_probabilities(example_list) :
 				col_values = example_list[x].array.unique()
 				for i in col_values :
 					temp_df = example_list[(example_list[x] == i) & (example_list[target_col] == y)]
-					probabilities.attribute_probabilites[(x,i,y)] = len(temp_df.index)/sz
+					attribute_probabilities[(x,i,y)] = len(temp_df.index)/sz
 			else :
 				mean = targ_df[x].mean()
 				std = targ_df[x].std()
-				probabilities.attribute_probabilites[(x,y)] = (mean,std)
-				##print("column = ",x," mean = ",mean," std = ",std)
-				##print(targ_df[x])
+				attribute_probabilities[(x,y)] = (mean,std)
+
+	return probabilities(class_probabilities,attribute_probabilities)
 
 
 def calc_gaussian_prob(val,mean,std) :
@@ -93,24 +97,24 @@ def calc_gaussian_prob(val,mean,std) :
 	return n/d
 
 
-def calc_accuracy(test_set,target_values) :
+def calc_accuracy(prob_class,test_set,target_values) :
 	correct = 0
 	total = len(test_set.index)
 	for x in test_set.itertuples(index = False) :
 		max_prob = -1;
 		ans = -1
 		for targ in target_values :
-			prob = probabilities.class_probabilties[targ]
+			prob = prob_class.class_probabilities[targ]
 			for y in test_set.columns :
 				name = attribute_set.attribute_names[y]
 				if name == attribute_set.target :
 					continue
 				if attribute_set.attribute_values[name]["continuous"] == 0 :
-					curr_prob = probabilities.attribute_probabilites[(y,x[y],targ)]
+					curr_prob = prob_class.attribute_probabilities[(y,x[y],targ)]
 					prob *= curr_prob
 					#print("for non-continuous attribute col = ",y," having value = ",x[y]," and target = ",targ, " probability = ",curr_prob)
 				else :
-					tpl = probabilities.attribute_probabilites[y,targ]
+					tpl = prob_class.attribute_probabilities[y,targ]
 					mean = tpl[0]
 					std = tpl[1]
 					curr_prob = calc_gaussian_prob(x[y],mean,std)
@@ -133,8 +137,53 @@ def calc_accuracy(test_set,target_values) :
 
 def learn_naive_bayes(example_list,target,target_values) :
 
+	return compute_probabilities(example_list)
+
+def five_cross_val(example_list,target,target_values) :
+
 	width = round(len(example_list.index)*0.2)
-	compute_probabilities(example_list)
+	set_a = example_list.iloc[0:width]
+	set_b = example_list.iloc[width:2*width]
+	set_c = example_list.iloc[2*width:3*width]
+	set_d = example_list.iloc[3*width:4*width]
+	set_e = example_list.iloc[4*width:]
+
+	s = 0
+
+	train = pd.concat([set_a,set_b,set_c,set_d])
+	test = set_e
+	prob_class = learn_naive_bayes(train,target,target_values)
+	unique_targets = train[len(train.columns)-1].array.unique()
+	s += calc_accuracy(prob_class,test,unique_targets)
+
+	train = pd.concat([set_a,set_b,set_c,set_e])
+	test = set_d
+	prob_class = learn_naive_bayes(train,target,target_values)
+	unique_targets = train[len(train.columns)-1].array.unique()
+	s += calc_accuracy(prob_class,test,unique_targets)
+
+	train = pd.concat([set_a,set_b,set_d,set_e])
+	test = set_c
+	prob_class = learn_naive_bayes(train,target,target_values)
+	unique_targets = train[len(train.columns)-1].array.unique()
+	s += calc_accuracy(prob_class,test,unique_targets)
+
+	train = pd.concat([set_a,set_c,set_d,set_e])
+	test = set_b
+	prob_class = learn_naive_bayes(train,target,target_values)
+	unique_targets = train[len(train.columns)-1].array.unique()
+	s += calc_accuracy(prob_class,test,unique_targets)
+
+	train = pd.concat([set_b,set_c,set_d,set_e])
+	test = set_a
+	prob_class = learn_naive_bayes(train,target,target_values)
+	unique_targets = train[len(train.columns)-1].array.unique()
+	s += calc_accuracy(prob_class,test,unique_targets)
+
+	print("Average validation accuracy = ",s/5)
+
+	
+
 
 
 def main() :
@@ -144,7 +193,6 @@ def main() :
 	print(example_list)
 	#building attribtue-set
 	for x in example_list.columns :
-		print(x)
 		mp = {}
 		mp["continuous"] = 1
 		mp["orig_values"] = []
@@ -179,10 +227,14 @@ def main() :
 	test_set = pd.DataFrame(scaler.fit_transform(test_set))
 
 	
-	learn_naive_bayes(training_set,attribute_set.target,attribute_set.target_values)
+	
 	unique_targets = training_set[len(training_set.columns)-1].array.unique()
 
-	print(calc_accuracy(test_set,unique_targets))
+	five_cross_val(training_set,attribute_set.target,unique_targets)
+	prob_class = learn_naive_bayes(training_set,attribute_set.target,unique_targets)
+	acc = calc_accuracy(prob_class,test_set,unique_targets)
+
+	print("Final test accuracy = ",acc)
 
 
 
