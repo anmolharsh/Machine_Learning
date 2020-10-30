@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 
 class attribute_set :
 	attribute_names = []
@@ -222,6 +224,75 @@ def sequential_backward_selection(classifier,test_set,target_values) :
 
 	return final_features,removed_features
 	
+
+
+
+def apply_pca(example_list):
+	df = pd.DataFrame(example_list, columns = example_list.columns)
+	pca = PCA(n_components=len(df.columns))
+	scaler=StandardScaler()
+	scaler.fit(df)
+	scaled_data=scaler.transform(df)
+	pca.fit(scaled_data)
+
+	y_label = pca.explained_variance_ratio_.cumsum()
+	x_label = []
+	for i in range(1,len(df.columns)+1):
+		x_label.append(i)
+	
+	# print("yoyoyooyoyoyoyoyoyoyoyoyoyo	")
+	fig, ax = plt.subplots()  # Create a figure and an axes.
+	plt.xlim(0, 25)
+	plt.ylim(0.0, 1.01)
+	ax.plot(x_label, y_label)
+	ax.set_xlabel('Number of components')  # Add an x-label to the axes.
+	ax.set_ylabel('Variance ratio')  # Add a y-label to the axes.
+	ax.set_title("Variance ratio vs. Number of components ")  # Add a title to the axes.
+	plt.savefig('plot.png')
+
+	comp_num=1
+	for i in range(len(df.columns)):
+		if y_label[i]<0.95 :
+			comp_num += 1
+		else :
+			break
+	# print(comp_num)
+	pca_new = PCA(n_components = comp_num)
+	pca_new.fit(scaled_data)
+	x_pca = pca_new.transform(scaled_data)
+
+	# lim = round((0.8)*len(x_pca.index))
+	# training_set = x_pca.iloc[0:lim]
+	# test_set = x_pca.iloc[lim:]
+
+	msk = np.random.rand(len(x_pca)) <= 0.8
+	training_set = x_pca[msk]
+	test_set = x_pca[~msk]
+
+	# print(training_set)
+	# print(test_set)
+	
+	#normalization using sklearn library
+	scaler1 = preprocessing.MinMaxScaler()
+	training_set = pd.DataFrame(scaler1.fit_transform(training_set))
+	test_set = pd.DataFrame(scaler1.fit_transform(test_set))
+
+	# mp = {}
+	# for x in test_set.columns :
+	# 	mp[x] = attribute_set.attribute_names[x]
+	# test_set = test_set.rename(columns = mp)
+	# training_set = training_set.rename(columns = mp)
+
+	
+	# print(training_set)
+	# print(test_set)
+	# # we do five fold cross validation
+	acc = 0
+	# acc,classifier = naive_bayes_classification(training_set, test_set, attribute_set.target)
+	print("Test accuracy after step 2 = ",acc)
+
+
+
 
 
 def main() :
