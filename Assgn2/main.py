@@ -15,7 +15,7 @@ class attribute_set :
 	attribute_values = {}
 	target =  "life_expectancy"
 	target_values = []
-	non_continuous = ["iso_code","continent","location","life_expectancy"]
+	non_continuous = []
 
 class probabilities :
 	class_probabilties = {}
@@ -54,7 +54,6 @@ def handle_missing_values(example_list) :
 					example_list.at[i,x] = modes.at[0,x]
 
 def compute_probabilities(example_list) :
-	print(example_list)
 	target_col = len(example_list.columns)-1
 	unique_targets = example_list[target_col].array.unique()
 	probabilities.target_values = unique_targets
@@ -66,6 +65,7 @@ def compute_probabilities(example_list) :
 	for y in unique_targets :
 		sz = target_freq[y]
 		targ_df = example_list[example_list[target_col] == y]
+		#print(targ_df)
 		for x in example_list.columns :
 			name = attribute_set.attribute_names[x]
 			if name == attribute_set.target :
@@ -79,6 +79,8 @@ def compute_probabilities(example_list) :
 				mean = targ_df[x].mean()
 				std = targ_df[x].std()
 				probabilities.attribute_probabilites[(x,y)] = (mean,std)
+				##print("column = ",x," mean = ",mean," std = ",std)
+				##print(targ_df[x])
 
 
 def calc_gaussian_prob(val,mean,std) :
@@ -86,7 +88,8 @@ def calc_gaussian_prob(val,mean,std) :
 		return 1 
 	var = std**2
 	d = (2*var*math.pi)**0.5
-	n = num = math.exp(-(float(val)-float(mean))**2/(2*var))
+	power = ((float(val)-float(mean))**2)/(2*var)
+	n = math.exp(-power)
 	return n/d
 
 
@@ -105,19 +108,21 @@ def calc_accuracy(test_set,target_values) :
 				if attribute_set.attribute_values[name]["continuous"] == 0 :
 					curr_prob = probabilities.attribute_probabilites[(y,x[y],targ)]
 					prob *= curr_prob
+					#print("for non-continuous attribute col = ",y," having value = ",x[y]," and target = ",targ, " probability = ",curr_prob)
 				else :
 					tpl = probabilities.attribute_probabilites[y,targ]
 					mean = tpl[0]
 					std = tpl[1]
 					curr_prob = calc_gaussian_prob(x[y],mean,std)
 					prob *= curr_prob
-				print(prob,targ)
+					#print("for continuous attribute col = ",y," having value = ",x[y]," and target = ",targ, " probability = ",curr_prob)
+			#print("combined probability = ",prob)
 			if prob > max_prob :
 				max_prob = prob
 				ans = targ
 		if ans == x[len(test_set.columns)-1] :
 			correct += 1
-		print("\n\n")
+		#print("\n\n")
 
 	return correct/total
 
@@ -127,7 +132,37 @@ def calc_accuracy(test_set,target_values) :
 
 
 def learn_naive_bayes(example_list,target,target_values) :
-	
+
+	width = round(len(example_list.index)*0.2)
+	compute_probabilities(example_list)
+
+
+def main() :
+
+	example_list = pd.read_csv("Train_E.csv")
+	attribute_set.attribute_names = example_list.columns
+	print(example_list)
+	#building attribtue-set
+	for x in example_list.columns :
+		print(x)
+		mp = {}
+		mp["continuous"] = 1
+		mp["orig_values"] = []
+		mp["encoded_values"] = []
+		if len(example_list[x].array.unique()) <= 5 :
+			attribute_set.non_continuous.append(x)
+			mp["continuous"] = 0
+		attribute_set.attribute_values[x] = mp
+
+	for x,y in example_list.iteritems() :
+		if attribute_set.attribute_values[x]["continuous"] == 1 :
+			continue
+		attribute_set.attribute_values[x]["orig_values"] = list(set(y.tolist()))
+		encode(attribute_set.attribute_values[x])
+
+
+	transform_example_list(example_list)
+
 	#dividng the example list into training set (80%) and test set (20%) 
 	example_list = example_list.sample(frac = 1)
 	lim = round((0.8)*len(example_list.index))
@@ -143,46 +178,11 @@ def learn_naive_bayes(example_list,target,target_values) :
 	training_set = pd.DataFrame(scaler.fit_transform(training_set))
 	test_set = pd.DataFrame(scaler.fit_transform(test_set))
 
-	compute_probabilities(training_set)
-
+	
+	learn_naive_bayes(training_set,attribute_set.target,attribute_set.target_values)
 	unique_targets = training_set[len(training_set.columns)-1].array.unique()
 
 	print(calc_accuracy(test_set,unique_targets))
-
-
-
-
-
-
-
-
-
-
-
-def main() :
-
-	example_list = pd.read_csv("Train_E.csv")
-	attribute_set.attribute_names = example_list.columns
-	print(example_list)
-	#building attribtue-set
-	for x in attribute_set.attribute_names :
-		mp = {}
-		mp["continuous"] = 1
-		mp["orig_values"] = []
-		mp["encoded_values"] = []
-		if x in attribute_set.non_continuous :
-			mp["continuous"] = 0
-		attribute_set.attribute_values[x] = mp
-
-	for x,y in example_list.iteritems() :
-		if attribute_set.attribute_values[x]["continuous"] == 1 :
-			continue
-		attribute_set.attribute_values[x]["orig_values"] = list(set(y.tolist()))
-		encode(attribute_set.attribute_values[x])
-
-
-	transform_example_list(example_list)
-	learn_naive_bayes(example_list,attribute_set.target,attribute_set.target_values)
 
 
 
