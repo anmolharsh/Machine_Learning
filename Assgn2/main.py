@@ -288,14 +288,21 @@ def apply_pca(example_list_orig):
 	for i in range(1,len(df.columns)+1):
 		x_label.append(i)
 	
-	fig, ax = plt.subplots()  # Create a figure and an axes.
-	plt.xlim(0, 25)
-	plt.ylim(0.0, 1.01)
-	ax.plot(x_label, y_label)
+	# fig, ax = plt.subplots()  # Create a figure and an axes.
+	# plt.xlim(0, 25)
+	# plt.ylim(0.0, 1.01)
+	# ax.plot(x_label, y_label)
+	# ax.set_xlabel('Number of components')  # Add an x-label to the axes.
+	# ax.set_ylabel('Variance ratio')  # Add a y-label to the axes.
+	# ax.set_title("Variance ratio vs. Number of components ")  # Add a title to the axes.
+	# plt.savefig('plot.png')
+	fig = plt.figure()
+	ax = fig.add_axes([0,0,1,1])
 	ax.set_xlabel('Number of components')  # Add an x-label to the axes.
 	ax.set_ylabel('Variance ratio')  # Add a y-label to the axes.
 	ax.set_title("Variance ratio vs. Number of components ")  # Add a title to the axes.
-	plt.savefig('plot.png')
+	ax.bar(x_label, y_label)
+	plt.savefig('bar_graph.png')
 
 	comp_num=1
 	for i in range(len(df.columns)):
@@ -303,7 +310,7 @@ def apply_pca(example_list_orig):
 			comp_num += 1
 		else :
 			break
-	# print(comp_num)
+	print(comp_num)
 	pca_new = PCA(n_components = comp_num)
 	pca_new.fit(scaled_data)
 	x_pca = pca_new.transform(scaled_data)
