@@ -283,7 +283,8 @@ def apply_pca(example_list_orig):
 	scaled_data=scaler.transform(df)
 	pca.fit(scaled_data)
 
-	y_label = pca.explained_variance_ratio_.cumsum()
+	y_label  = pca.explained_variance_ratio_
+	y_cumsum = pca.explained_variance_ratio_.cumsum()
 	x_label = []
 	for i in range(1,len(df.columns)+1):
 		x_label.append(i)
@@ -296,21 +297,24 @@ def apply_pca(example_list_orig):
 	# ax.set_ylabel('Variance ratio')  # Add a y-label to the axes.
 	# ax.set_title("Variance ratio vs. Number of components ")  # Add a title to the axes.
 	# plt.savefig('plot.png')
+
+	# bar graph
 	fig = plt.figure()
-	ax = fig.add_axes([0,0,1,1])
-	ax.set_xlabel('Number of components')  # Add an x-label to the axes.
-	ax.set_ylabel('Variance ratio')  # Add a y-label to the axes.
-	ax.set_title("Variance ratio vs. Number of components ")  # Add a title to the axes.
-	ax.bar(x_label, y_label)
+	# ax = fig.add_axes([0,0,1,1])
+	plt.xlabel('Number of components')  # Add an x-label to the axes.
+	plt.ylabel('Variance ratio')  # Add a y-label to the axes.
+	plt.title("Variance ratio vs. Number of components ")  # Add a title to the axes.
+	plt.bar(x_label, y_label)
+	# plt.set_yticks(np.arange(0, 0.51, 0.10))
 	plt.savefig('bar_graph.png')
 
 	comp_num=1
 	for i in range(len(df.columns)):
-		if y_label[i]<0.95 :
+		if y_cumsum[i]<0.95 :
 			comp_num += 1
 		else :
 			break
-	print(comp_num)
+	# print(comp_num)
 	pca_new = PCA(n_components = comp_num)
 	pca_new.fit(scaled_data)
 	x_pca = pca_new.transform(scaled_data)
@@ -323,7 +327,7 @@ def apply_pca(example_list_orig):
 	
 	x_pca = pd.DataFrame(data = x_pca) 
 
-	print(x_pca)
+	# print(x_pca)
 	attribute_names = []
 	attribute_values = {}
 	target =  x_pca.columns[len(x_pca.columns)-1]
@@ -399,15 +403,16 @@ def main() :
 	#handling the missing values
 	handle_missing_values(attributes,training_set)
 	handle_missing_values(attributes,test_set)
-	example_list = example_list.reset_index()
-	example_list = example_list.drop(columns='index')
+	
+	# example_list = example_list.reset_index()
+	# example_list = example_list.drop(columns='index')
 
 	# print(example_list)
-	apply_pca(example_list)
-	new_3a = remove_outliers(example_list)
-	print(new_3a)
+	# apply_pca(example_list)
+	# new_3a = remove_outliers(example_list)
+	# print(new_3a)
 
-	"""
+	# """
 	#normalization using sklearn library
 	scaler = preprocessing.MinMaxScaler()
 	training_set = pd.DataFrame(scaler.fit_transform(training_set))
@@ -442,7 +447,7 @@ def main() :
 	acc,classifier = naive_bayes_classification(attributes,new_train,new_test,attributes.target)
 
 	print("Final test accuracy = ",acc)
-	"""
+	# """
 
 
 
