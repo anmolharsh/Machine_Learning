@@ -251,7 +251,7 @@ def remove_outliers(data):
 		mark.append(0)
 	# print(mark)
 	for i in range(len(data)):
-		for j in range(len(data.columns)):
+		for j in range(len(data.columns)-1):
 			if data.iloc[i,j] >= limit[j]:
 				mark[i] += 1
 
