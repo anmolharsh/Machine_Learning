@@ -188,7 +188,7 @@ def five_cross_val(attribute_set,example_list,target,target_values) :
 	unique_targets = train[train.columns[-1]].array.unique()
 	s += calc_accuracy(attribute_set,classifier,test,unique_targets)
 
-	print("Average validation accuracy = ",s/5)
+	print("Average validation accuracy = ",(s/5)*100, "%")
 
 	
 def naive_bayes_classification(attribute_set,training_set,test_set,target) :
@@ -356,7 +356,7 @@ def apply_pca(example_list_orig):
 	# # # we do five fold cross validation
 	acc = 0
 	acc,classifier = naive_bayes_classification(attributes,training_set, test_set, attributes.target)
-	print("Test accuracy after step 2 = ",acc)
+	print("Test accuracy after step 2 = ",acc*100,"%")
 
 
 
@@ -404,13 +404,8 @@ def main() :
 	handle_missing_values(attributes,training_set)
 	handle_missing_values(attributes,test_set)
 	
-	# example_list = example_list.reset_index()
-	# example_list = example_list.drop(columns='index')
-
-	# print(example_list)
-	# apply_pca(example_list)
-	# new_3a = remove_outliers(example_list)
-	# print(new_3a)
+	example_list = example_list.reset_index()
+	example_list = example_list.drop(columns='index')
 
 	# """
 	#normalization using sklearn library
@@ -425,28 +420,47 @@ def main() :
 	test_set = test_set.rename(columns = mp)
 	training_set = training_set.rename(columns = mp)
 
-	print(training_set)
+	# print(training_set)
 
 	#performing Naive-Bayes Classification with 5 fold Cross Validation
 	acc,classifier = naive_bayes_classification(attributes,training_set,test_set,attributes.target)
 
-	print("Final test accuracy = ",acc)
+	print("Final test accuracy after step 1 = ",acc*100,"%")
+
+	apply_pca(example_list)
+
+	new_3a = remove_outliers(example_list)
 
 	#peforming Sequential Backward Selection to reduce the number of features
-	target_col = training_set.columns[len(training_set.columns)-1]
-	final_features,removed_features = sequential_backward_selection(attributes,classifier,test_set,training_set[target_col].array.unique())
+	msk = np.random.rand(len(new_3a)) <= 0.8
+	n_training_set = new_3a[msk]
+	n_test_set = new_3a[~msk]
+
+	#normalization using sklearn library
+	# scaler = preprocessing.MinMaxScaler()
+	n_training_set = pd.DataFrame(scaler.fit_transform(n_training_set))
+	n_test_set = pd.DataFrame(scaler.fit_transform(n_test_set))
+
+	# n_training_set = pd.DataFrame(n_training_set)
+	# n_test_set = pd.DataFrame(n_test_set)
+	n_test_set = n_test_set.rename(columns = mp)
+	n_training_set = n_training_set.rename(columns = mp)
+
+	#peforming Sequential Backward Selection to reduce the number of features
+	target_col = n_training_set.columns[len(n_training_set.columns)-1]
+	final_features,removed_features = sequential_backward_selection(attributes,classifier,n_test_set,n_training_set[target_col].array.unique())
 
 	print("Number of features removed :",len(removed_features))
 	print("The final set of features are :",final_features)
 
 	print("Performing 5-Cross Validation on the new set of features")
 
-	new_train = training_set.drop(columns = removed_features)
-	new_test = test_set.drop(columns = removed_features)
+	new_train = n_training_set.drop(columns = removed_features)
+	new_test = n_test_set.drop(columns = removed_features)
 
 	acc,classifier = naive_bayes_classification(attributes,new_train,new_test,attributes.target)
 
-	print("Final test accuracy = ",acc)
+	print("Final test accuracy after step 3 = ",acc*100, "%")
 	# """
 
 
