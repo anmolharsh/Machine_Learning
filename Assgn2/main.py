@@ -201,9 +201,6 @@ def naive_bayes_classification(attribute_set,training_set,test_set,target) :
 	acc = calc_accuracy(attribute_set,classifier,test_set,unique_targets)
 	return acc,classifier
 
-def sample_seiving(example_list) :
-	x = 0
-
 def sequential_backward_selection(attribute_set,classifier,test_set,target_values) :
 
 	final_features = test_set.columns.to_list()
