@@ -57,6 +57,7 @@ def handle_missing_values(attribute_set,example_list) :
 	
 	means = example_list.mean(skipna = True).to_dict() #for continuous attributes
 	modes = example_list.mode(dropna = True) 		   #for discrete attributes
+	
 	#handling for continuous varai
 	for x in example_list.columns :
 		for i in example_list.index :
@@ -233,7 +234,6 @@ def sequential_backward_selection(attribute_set,classifier,test_set,target_value
 
 
 def remove_outliers(data):
-	# print(data)
 	limit = []
 	for x in data:
 		limit.append(data[x].mean())
@@ -241,27 +241,23 @@ def remove_outliers(data):
 	for x in data:
 		limit[i] += 3*data[x].std()
 		i += 1
-	# print(limit)
 	mark = []
 
 	for i in range(len(data)):
 		mark.append(0)
-	# print(mark)
+
 	for i in range(len(data)):
 		for j in range(len(data.columns)-1):
 			if data.iloc[i,j] >= limit[j]:
 				mark[i] += 1
 
 	mark = pd.DataFrame(mark)
-	# print(mark)
-	# print(data)
+
 	i = 0
 	for x in range(len(mark)):
-		# condition/threshold
 		if mark.iloc[x,0] > 0:
 			data = data.drop(x , axis = 0)
 
-	# print(data)
 	return data
 
 
@@ -286,23 +282,13 @@ def apply_pca(example_list_orig):
 	for i in range(1,len(df.columns)+1):
 		x_label.append(i)
 	
-	# fig, ax = plt.subplots()  # Create a figure and an axes.
-	# plt.xlim(0, 25)
-	# plt.ylim(0.0, 1.01)
-	# ax.plot(x_label, y_label)
-	# ax.set_xlabel('Number of components')  # Add an x-label to the axes.
-	# ax.set_ylabel('Variance ratio')  # Add a y-label to the axes.
-	# ax.set_title("Variance ratio vs. Number of components ")  # Add a title to the axes.
-	# plt.savefig('plot.png')
 
 	# bar graph
 	fig = plt.figure()
-	# ax = fig.add_axes([0,0,1,1])
 	plt.xlabel('Number of components')  # Add an x-label to the axes.
 	plt.ylabel('Variance ratio')  # Add a y-label to the axes.
 	plt.title("Variance ratio vs. Number of components ")  # Add a title to the axes.
 	plt.bar(x_label, y_label)
-	# plt.set_yticks(np.arange(0, 0.51, 0.10))
 	plt.savefig('bar_graph.png')
 
 	comp_num=1
@@ -311,7 +297,7 @@ def apply_pca(example_list_orig):
 			comp_num += 1
 		else :
 			break
-	# print(comp_num)
+
 	pca_new = PCA(n_components = comp_num)
 	pca_new.fit(scaled_data)
 	x_pca = pca_new.transform(scaled_data)
@@ -324,7 +310,6 @@ def apply_pca(example_list_orig):
 	
 	x_pca = pd.DataFrame(data = x_pca) 
 
-	# print(x_pca)
 	attribute_names = []
 	attribute_values = {}
 	target =  x_pca.columns[len(x_pca.columns)-1]
@@ -349,11 +334,14 @@ def apply_pca(example_list_orig):
 
 	training_set = pd.DataFrame(data = training_set) 
 	test_set = pd.DataFrame(data = test_set) 
+
+	print("Final number of components = ",comp_num)
 	
 	# # # we do five fold cross validation
 	acc = 0
+	print("Performing 5-Cross Validation on the new set of components : ")
 	acc,classifier = naive_bayes_classification(attributes,training_set, test_set, attributes.target)
-	print("Test accuracy after step 2 = ",acc*100,"%")
+	print("Test accuracy after step 2 = ",acc*100,"%\n")
 
 
 
@@ -369,7 +357,7 @@ def main() :
 	non_continuous = []
 
 	attribute_names = example_list.columns
-	print(example_list)
+
 	#building attribtue-set
 	for x in example_list.columns :
 		mp = {}
@@ -388,7 +376,7 @@ def main() :
 		encode(attribute_values[x])
 
 	attributes = attribute_set(attribute_names,attribute_values,target,target_values,non_continuous)
-	# print(attributes.attribute_values)
+
 	transform_example_list(attributes,example_list)
 
 	#dividng the example list into training set (80%) and test set (20%) 
@@ -404,7 +392,7 @@ def main() :
 	example_list = example_list.reset_index()
 	example_list = example_list.drop(columns='index')
 
-	# """
+
 	#normalization using sklearn library
 	scaler = preprocessing.MinMaxScaler()
 	training_set = pd.DataFrame(scaler.fit_transform(training_set))
@@ -417,14 +405,18 @@ def main() :
 	test_set = test_set.rename(columns = mp)
 	training_set = training_set.rename(columns = mp)
 
-	# print(training_set)
 
 	#performing Naive-Bayes Classification with 5 fold Cross Validation
 	acc,classifier = naive_bayes_classification(attributes,training_set,test_set,attributes.target)
 
-	print("Final test accuracy after step 1 = ",acc*100,"%")
+	print("Final test accuracy after step 1 = ",acc*100,"%\n")
+	print("-"*100, "\n")
+
+	print("After performing PCA :")
 
 	apply_pca(example_list)
+
+	print("-"*100, "\n")
 
 	new_3a = remove_outliers(example_list)
 
@@ -438,8 +430,6 @@ def main() :
 	n_training_set = pd.DataFrame(scaler.fit_transform(n_training_set))
 	n_test_set = pd.DataFrame(scaler.fit_transform(n_test_set))
 
-	# n_training_set = pd.DataFrame(n_training_set)
-	# n_test_set = pd.DataFrame(n_test_set)
 	n_test_set = n_test_set.rename(columns = mp)
 	n_training_set = n_training_set.rename(columns = mp)
 
@@ -447,6 +437,7 @@ def main() :
 	target_col = n_training_set.columns[len(n_training_set.columns)-1]
 	final_features,removed_features = sequential_backward_selection(attributes,classifier,n_test_set,n_training_set[target_col].array.unique())
 
+	print("After performing Sequential Backward Selection :")
 	print("Number of features removed :",len(removed_features))
 	print("The final set of features are :",final_features)
 
@@ -458,7 +449,7 @@ def main() :
 	acc,classifier = naive_bayes_classification(attributes,new_train,new_test,attributes.target)
 
 	print("Final test accuracy after step 3 = ",acc*100, "%")
-	# """
+
 
 
 
