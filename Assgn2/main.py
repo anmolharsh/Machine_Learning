@@ -350,6 +350,9 @@ def apply_pca(example_list_orig):
 def main() :
 
 	example_list = pd.read_csv("Train_E.csv")
+	example_list = example_list.drop(columns = 'date')
+
+	print(example_list)
 	attribute_names = []
 	attribute_values = {}
 	target =  "life_expectancy"
