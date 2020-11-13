@@ -65,20 +65,23 @@ def mlp_classification(attribute_set, training_set, test_set) :
 		y_pts = []
 		for x in range(5) :
 			x_pts.append(rate)
-			classifier = MLPClassifier(solver = 'sgd',hidden_layer_sizes = hidden_layer, learning_rate_init = rate)
+			classifier = MLPClassifier(max_iter = 2000,activation = 'logistic',solver = 'sgd',hidden_layer_sizes = hidden_layer, learning_rate_init = rate)
 			classifier.fit(X_train,Y_train)
 			Y_predicted = classifier.predict(X_test)
-			y_pts.append(calc_accuracy(Y_test, Y_predicted))
+			y_pts.append(calc_accuracy(Y_test, Y_predicted)*100)
 			rate /= 10
 
 		# line graph
 		fig = plt.figure()
 		plt.xlabel('Learning Rate')  # Add an x-label to the axes.
 		plt.ylabel('Accuracy')  # Add a y-label to the axes.
-		plt.title("Accuracy vs. Learning Rate")  # Add a title to the axes.
+		plt.title("Accuracy vs. Learning Rate for Model " + str(i+1))  # Add a title to the axes.
+		plt.ylim([0,100])
 		plt.semilogx(x_pts, y_pts)
-		file_name = "graph_architecture_" + str(i)
+		file_name = "graph_architecture_" + str(i+1)
 		plt.savefig(file_name)
+
+		print(y_pts)
 
 	# comapring accuracy vs architecture for each learning rate
 	rate = 0.1
@@ -88,36 +91,30 @@ def mlp_classification(attribute_set, training_set, test_set) :
 		exec_time = []
 		for j,x in zip(range(5),architectures) :
 			start_time = time.time()
-			classifier = MLPClassifier(activation = "logistic", solver = 'sgd',hidden_layer_sizes = x, learning_rate_init = rate)
+			classifier = MLPClassifier(max_iter = 2000,activation = "logistic", solver = 'sgd',hidden_layer_sizes = x, learning_rate_init = rate)
 			classifier.fit(X_train,Y_train)
 			exec_time.append(time.time()-start_time)
 			Y_predicted = classifier.predict(X_test)
 			x_pts.append("Model " + str(j))
-			y_pts.append(calc_accuracy(Y_test, Y_predicted))
-		print(exec_time,"\n")
+			y_pts.append(calc_accuracy(Y_test, Y_predicted)*100)
+
 		# bar graph
 		fig = plt.figure()
 		plt.xlabel('Model')  # Add an x-label to the axes.
 		plt.ylabel('Accuracy')  # Add a y-label to the axes.
 		plt.title("Accuracy vs Model for Learning Rate = " + str(rate))  # Add a title to the axes.
-		plt.ylim([0,1])
+		plt.ylim([0,100])
 		plt.bar(x = np.array(x_pts), height = np.array(y_pts), width = 0.4)
-		file_name = "graph_learning_rate_" + str(i) + ".png"
+		file_name = "graph_learning_rate_" + str(i+1) + ".png"
 		plt.savefig(file_name)
+		print(max(y_pts))
 
 		rate /= 10
-	
-
-
-
-
-	
 	
 
 def main() :
 
 	example_list = pd.read_csv("hcc-data.csv")
-	print(example_list)
 
 	attribute_names = []
 	attribute_values = {}
@@ -139,11 +136,14 @@ def main() :
 
 	attributes = attribute_set(attribute_names,attribute_values,target,target_values,non_continuous)
 
+	print(example_list)
 	#dividng the example list into training set (80%) and test set (20%) 
-	example_list = example_list.sample(frac = 1)
+	example_list = example_list.sample(frac = 1,random_state = 1000)
 	lim = round((0.8)*len(example_list.index))
 	training_set = example_list.iloc[0:lim]
 	test_set = example_list.iloc[lim:]
+
+	print(example_list)
 
 	#handling the missing values
 	handle_missing_values(attributes,training_set)
@@ -162,8 +162,8 @@ def main() :
 	training_set.iloc[:,-1] = target_train
 	test_set.iloc[:,-1] = target_test
 
-	print(training_set)
-	print(test_set)
+	print(example_list)
+
 
 	mlp_classification(attribute_set, training_set, test_set)
 
