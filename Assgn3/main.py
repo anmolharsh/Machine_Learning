@@ -5,9 +5,9 @@ import math
 import os
 import copy
 import random
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 import time
 from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
@@ -15,6 +15,9 @@ from sklearn.decomposition import PCA
 from sklearn.neural_network import MLPClassifier
 from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
+from sklearn import svm
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 
 class attribute_set :
 
@@ -136,20 +139,20 @@ def main() :
 
 	attributes = attribute_set(attribute_names,attribute_values,target,target_values,non_continuous)
 
-	print(example_list)
+	# print(example_list)
 	#dividng the example list into training set (80%) and test set (20%) 
 	example_list = example_list.sample(frac = 1,random_state = 1000)
 	lim = round((0.8)*len(example_list.index))
 	training_set = example_list.iloc[0:lim]
 	test_set = example_list.iloc[lim:]
 
-	print(example_list)
+	# print(example_list)
 
 	#handling the missing values
 	handle_missing_values(attributes,training_set)
 	handle_missing_values(attributes,test_set)
 
-	print(example_list)
+	# print(example_list)
 
 	# standardizing the training and data set
 	target_train = training_set.iloc[:,-1].values
@@ -162,9 +165,40 @@ def main() :
 	training_set.iloc[:,-1] = target_train
 	test_set.iloc[:,-1] = target_test
 
-	print(example_list)
+	# print(example_list)
 
-
+	# print(training_set)
+	# print(target_train)
+	# part 1
+	C_values = [0.001,0.01,0.1,1,10,100,1000]
+	lin_acc = []
+	rbf_acc = []
+	poly_acc = []
+	for i in C_values:
+		clf = svm.SVC(kernel='linear',C=i)
+		clf.fit(training_set, target_train)
+		y_pred = clf.predict(test_set)
+		lin_acc.append(clf.score(test_set, target_test))
+		
+		clf = svm.SVC(kernel='rbf',C=i)
+		clf.fit(training_set, target_train)
+		y_pred = clf.predict(test_set)
+		rbf_acc.append(clf.score(test_set, target_test))
+		
+		clf = svm.SVC(kernel='poly',degree = 2,C=i)
+		clf.fit(training_set, target_train)
+		y_pred = clf.predict(test_set)
+		poly_acc.append(clf.score(test_set, target_test))
+	best_acc = max(max(lin_acc),max(rbf_acc),max(poly_acc))
+	print("\nPart 1\n")
+	print("Best_accuracy = ",best_acc)
+	print("\nLinear Kernel" )
+	print(lin_acc)
+	print("\nRbf Kernel" )
+	print(rbf_acc)
+	print("\nPoly_ Kernel" )
+	print(poly_acc)
+	print("\n")
 	mlp_classification(attribute_set, training_set, test_set)
 
 	
@@ -173,4 +207,4 @@ def main() :
 
 
 if __name__ == '__main__':
-    main()
+	main()
