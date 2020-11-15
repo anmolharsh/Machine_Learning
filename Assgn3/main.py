@@ -48,6 +48,75 @@ def calc_accuracy(Y_test, Y_predicted) :
 
 	return count/sz
 
+def truncate(data):
+	x = 0
+	for i in range(len(data)):
+		x = (int)(data[i]*100)
+		data[i] = x/100
+
+def part_1(X_train, X_test, y_train, y_test):
+	# part 1
+	
+	print("\nPart 1\n")
+	# print("Best_accuracy = ",best_acc*100)
+	C_values = [0.001,0.01,0.1,1,10,100,1000]
+	lin_acc = []
+	rbf_acc = []
+	poly_acc = []
+	train_acc = {"C_values":C_values,"Linear Kernel train":[] , "Quadratic Kernel train":[], "Rbf Kernel train":[] }
+	for i in C_values:
+		clf = svm.SVC(kernel='linear',C=i)
+		clf.fit(X_train,y_train)
+		lin_acc.append(100*clf.score(X_test,y_test))
+		train_acc["Linear Kernel train"].append(((int)(100*(100*clf.score(X_train,y_train))))/100)
+		
+		clf = svm.SVC(kernel='rbf',C=i)
+		clf.fit(X_train,y_train)
+		rbf_acc.append(100*clf.score(X_test,y_test))
+		train_acc["Rbf Kernel train"].append(((int)(100*(100*clf.score(X_train,y_train))))/100)
+
+		
+		clf = svm.SVC(kernel='poly',degree = 2,C=i)
+		clf.fit(X_train,y_train)
+		poly_acc.append(100*clf.score(X_test,y_test))
+		train_acc["Quadratic Kernel train" ].append(((int)(100*(100*clf.score(X_train,y_train))))/100)
+
+	# print(len(lin_acc))
+	# for i in range(len(lin_acc)):
+	# 	lin_acc[i] = lin_acc[i]*100
+	# for i in range(len(rbf_acc)):
+	# 	rbf_acc[i] = rbf_acc[i]*100
+	# for i in range(len(poly_acc)):
+	# 	poly_acc[i] = poly_acc[i]*100
+	best_acc = max(max(lin_acc),max(rbf_acc),max(poly_acc))
+	print("Best_accuracy:",(((int)(best_acc*100))/100))
+
+	# print("\nLinear Kernel" )
+	truncate(lin_acc)
+	# print(lin_acc)
+
+	# print("\nRbf Kernel" )
+	truncate(rbf_acc)
+	# print(rbf_acc)
+
+	# print("\nPoly_ Kernel" )
+	truncate(poly_acc)
+	# print(poly_acc)
+	# print("training accuracy")
+	data = {"C_values":C_values,"Linear Kernel":lin_acc , "Quadratic Kernel":poly_acc, "Rbf Kernel":rbf_acc }
+	print(pd.DataFrame.from_dict(data))
+	print("\n")
+	print(pd.DataFrame.from_dict(train_acc))
+
+
+
+
+
+
+
+
+
+
 def mlp_classification(attribute_set, training_set, test_set) :
 
 	print("-"*100, "\n")
@@ -178,35 +247,8 @@ def main() :
 	test_set.iloc[:,-1] = target_test
 
 	# part 1
-	C_values = [0.001,0.01,0.1,1,10,100,1000]
-	lin_acc = []
-	rbf_acc = []
-	poly_acc = []
-	for i in C_values:
-		clf = svm.SVC(kernel='linear',C=i)
-		clf.fit(training_set, target_train)
-		y_pred = clf.predict(test_set)
-		lin_acc.append(clf.score(test_set, target_test))
-		
-		clf = svm.SVC(kernel='rbf',C=i)
-		clf.fit(training_set, target_train)
-		y_pred = clf.predict(test_set)
-		rbf_acc.append(clf.score(test_set, target_test))
-		
-		clf = svm.SVC(kernel='poly',degree = 2,C=i)
-		clf.fit(training_set, target_train)
-		y_pred = clf.predict(test_set)
-		poly_acc.append(clf.score(test_set, target_test))
-	best_acc = max(max(lin_acc),max(rbf_acc),max(poly_acc))
-	print("\nPart 1\n")
-	print("Best_accuracy = ",best_acc)
-	print("\nLinear Kernel" )
-	print(lin_acc)
-	print("\nRbf Kernel" )
-	print(rbf_acc)
-	print("\nPoly_ Kernel" )
-	print(poly_acc)
-	print("\n")
+	part_1(training_set, test_set, target_train, target_test)
+
 	mlp_classification(attribute_set, training_set, test_set)
 
 	
