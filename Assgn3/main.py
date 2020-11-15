@@ -13,8 +13,7 @@ from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.neural_network import MLPClassifier
-from sklearn.utils.testing import ignore_warnings
-from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._testing import ignore_warnings
 
 class attribute_set :
 
@@ -46,8 +45,10 @@ def calc_accuracy(Y_test, Y_predicted) :
 
 	return count/sz
 
-@ignore_warnings(category=ConvergenceWarning)
 def mlp_classification(attribute_set, training_set, test_set) :
+
+	print("-"*100, "\n")
+	print("~ Performing Multi-Layer Perceptron Classification ~")
 	X_train = training_set.iloc[:,0:-1].values
 	Y_train = training_set.iloc[:,-1].values
 
@@ -55,7 +56,6 @@ def mlp_classification(attribute_set, training_set, test_set) :
 	Y_test = test_set.iloc[:,-1].values
 
 	
-
 	architectures = [(), (2), (6), (2,3), (3,2)]
 
 	# comparing accuracy vs learning rate for each model
@@ -65,7 +65,7 @@ def mlp_classification(attribute_set, training_set, test_set) :
 		y_pts = []
 		for x in range(5) :
 			x_pts.append(rate)
-			classifier = MLPClassifier(max_iter = 2000,activation = 'logistic',solver = 'sgd',hidden_layer_sizes = hidden_layer, learning_rate_init = rate)
+			classifier = MLPClassifier(random_state = 1000,max_iter = 2000,activation = 'logistic',solver = 'sgd',hidden_layer_sizes = hidden_layer, learning_rate_init = rate)
 			classifier.fit(X_train,Y_train)
 			Y_predicted = classifier.predict(X_test)
 			y_pts.append(calc_accuracy(Y_test, Y_predicted)*100)
@@ -74,43 +74,58 @@ def mlp_classification(attribute_set, training_set, test_set) :
 		# line graph
 		fig = plt.figure()
 		plt.xlabel('Learning Rate')  # Add an x-label to the axes.
-		plt.ylabel('Accuracy')  # Add a y-label to the axes.
+		plt.ylabel('Accuracy (%)')  # Add a y-label to the axes.
 		plt.title("Accuracy vs. Learning Rate for Model " + str(i+1))  # Add a title to the axes.
 		plt.ylim([0,100])
 		plt.semilogx(x_pts, y_pts)
 		file_name = "graph_architecture_" + str(i+1)
 		plt.savefig(file_name)
 
-		print(y_pts)
 
 	# comapring accuracy vs architecture for each learning rate
 	rate = 0.1
+	max_accuracy = 0
+	best_rate = -1
+	best_architecture = ()
 	for i in range(5) :
 		x_pts = []
 		y_pts = []
 		exec_time = []
 		for j,x in zip(range(5),architectures) :
 			start_time = time.time()
-			classifier = MLPClassifier(max_iter = 2000,activation = "logistic", solver = 'sgd',hidden_layer_sizes = x, learning_rate_init = rate)
+			classifier = MLPClassifier(random_state = 1000,max_iter = 2000,activation = 'logistic', solver = 'sgd',hidden_layer_sizes = x, learning_rate_init = rate)
 			classifier.fit(X_train,Y_train)
 			exec_time.append(time.time()-start_time)
 			Y_predicted = classifier.predict(X_test)
 			x_pts.append("Model " + str(j))
-			y_pts.append(calc_accuracy(Y_test, Y_predicted)*100)
+			acc = calc_accuracy(Y_test, Y_predicted)*100
+			y_pts.append(acc)
+			if acc > max_accuracy :
+				max_accuracy = acc
+				best_rate = rate
+				best_architecture = x
 
 		# bar graph
 		fig = plt.figure()
 		plt.xlabel('Model')  # Add an x-label to the axes.
-		plt.ylabel('Accuracy')  # Add a y-label to the axes.
+		plt.ylabel('Accuracy (%)')  # Add a y-label to the axes.	
 		plt.title("Accuracy vs Model for Learning Rate = " + str(rate))  # Add a title to the axes.
 		plt.ylim([0,100])
-		plt.bar(x = np.array(x_pts), height = np.array(y_pts), width = 0.4)
+		plt.bar(x = x_pts, height = y_pts, width = 0.4)
 		file_name = "graph_learning_rate_" + str(i+1) + ".png"
 		plt.savefig(file_name)
 		print(max(y_pts))
 
 		rate /= 10
-	
+
+	print("The best model found :")
+	print("Learning Rate = ",best_rate)
+	print("Architecture of the Neural Network :")
+	print(" "*6,"Number of hidden layers = ",len(best_architecture))
+	for x,i in zip(best_architecture,range(len(best_architecture))) :
+		print(" "*12,"Number of neurons in layer ",i," = ", x)
+	print("Accuracy of the model = ",max_accuracy,"%")
+
 
 def main() :
 
@@ -136,20 +151,16 @@ def main() :
 
 	attributes = attribute_set(attribute_names,attribute_values,target,target_values,non_continuous)
 
-	print(example_list)
-	#dividng the example list into training set (80%) and test set (20%) 
-	example_list = example_list.sample(frac = 1,random_state = 1000)
+	#dividng the example list into training set (80%) and test set (20%)
+	example_list = example_list.sample(frac = 1,random_state = 1000) 
 	lim = round((0.8)*len(example_list.index))
 	training_set = example_list.iloc[0:lim]
 	test_set = example_list.iloc[lim:]
 
-	print(example_list)
 
 	#handling the missing values
 	handle_missing_values(attributes,training_set)
 	handle_missing_values(attributes,test_set)
-
-	print(example_list)
 
 	# standardizing the training and data set
 	target_train = training_set.iloc[:,-1].values
@@ -161,9 +172,6 @@ def main() :
 	test_set = pd.DataFrame(scaler.transform(test_set))
 	training_set.iloc[:,-1] = target_train
 	test_set.iloc[:,-1] = target_test
-
-	print(example_list)
-
 
 	mlp_classification(attribute_set, training_set, test_set)
 
