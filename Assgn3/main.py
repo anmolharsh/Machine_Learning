@@ -13,15 +13,10 @@ from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.neural_network import MLPClassifier
-<<<<<<< HEAD
 from sklearn.utils._testing import ignore_warnings
-=======
-from sklearn.utils.testing import ignore_warnings
-from sklearn.exceptions import ConvergenceWarning
 from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
->>>>>>> 5e113cbacb5f7a009b6238b7dc04b26edb17c032
 
 class attribute_set :
 
@@ -159,32 +154,18 @@ def main() :
 
 	attributes = attribute_set(attribute_names,attribute_values,target,target_values,non_continuous)
 
-<<<<<<< HEAD
-	#dividng the example list into training set (80%) and test set (20%)
-	example_list = example_list.sample(frac = 1,random_state = 1000) 
-=======
-	# print(example_list)
 	#dividng the example list into training set (80%) and test set (20%) 
 	example_list = example_list.sample(frac = 1,random_state = 1000)
->>>>>>> 5e113cbacb5f7a009b6238b7dc04b26edb17c032
 	lim = round((0.8)*len(example_list.index))
 	training_set = example_list.iloc[0:lim]
 	test_set = example_list.iloc[lim:]
 
-<<<<<<< HEAD
-=======
-	# print(example_list)
->>>>>>> 5e113cbacb5f7a009b6238b7dc04b26edb17c032
 
 	#handling the missing values
 	handle_missing_values(attributes,training_set)
 	handle_missing_values(attributes,test_set)
 
-<<<<<<< HEAD
-=======
-	# print(example_list)
 
->>>>>>> 5e113cbacb5f7a009b6238b7dc04b26edb17c032
 	# standardizing the training and data set
 	target_train = training_set.iloc[:,-1].values
 	target_test = test_set.iloc[:,-1].values
@@ -196,12 +177,6 @@ def main() :
 	training_set.iloc[:,-1] = target_train
 	test_set.iloc[:,-1] = target_test
 
-<<<<<<< HEAD
-=======
-	# print(example_list)
-
-	# print(training_set)
-	# print(target_train)
 	# part 1
 	C_values = [0.001,0.01,0.1,1,10,100,1000]
 	lin_acc = []
@@ -232,7 +207,6 @@ def main() :
 	print("\nPoly_ Kernel" )
 	print(poly_acc)
 	print("\n")
->>>>>>> 5e113cbacb5f7a009b6238b7dc04b26edb17c032
 	mlp_classification(attribute_set, training_set, test_set)
 
 	
